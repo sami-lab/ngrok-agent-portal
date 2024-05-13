@@ -504,7 +504,12 @@ export default function FullFeaturedCrudGrid({ data, onUpdate }) {
 
     const updatedRow = response.data;
     const newRows = rows.map((row) =>
-      row.id === newRow.id ? updatedRow : row
+      row.id === newRow.id
+        ? {
+            ...row,
+            ...updatedRow,
+          }
+        : row
     );
     setRows(newRows);
     onUpdate({

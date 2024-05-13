@@ -44,7 +44,7 @@ async def changeEndpointsStatus(id):
         else:
             logger.debug(f"Stopping endpoint {endpoint['name']}")
             try:
-                endpoint["listener"].close()
+                #endpoint["listener"].close()
                 logger.info(f"Ingress closed")
                 endpoint["status"] = "offline"
                 success = True
