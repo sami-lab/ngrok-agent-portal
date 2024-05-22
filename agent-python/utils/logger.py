@@ -7,7 +7,7 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
 # Determine logging level based on environment
 def get_log_level():
-    env = os.getenv("NODE_ENV", "development")
+    env = os.getenv("ENV", "development")
     return logging.DEBUG if env == "development" else logging.WARNING
 
 # Create a logger
@@ -23,7 +23,7 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 # Add file handlers if in production environment
-if os.getenv("NODE_ENV") == "production":
+if os.getenv("ENV") == "production":
     error_file_handler = logging.FileHandler("/tmp/ngrok-agent-python-error.log")
     error_file_handler.setLevel(logging.ERROR)
     error_file_handler.setFormatter(formatter)

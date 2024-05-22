@@ -6,8 +6,9 @@ from utils.logger import logger
 import endpointsmanager     
 
 def getAgentStatus():
-    return {"success": True, "message": "Connected"}
-
+    response= {"success": True, "message": "Connected"}
+    logger.debug(response)
+    return response
 async def fetchAgentConfig():
     #  not user:
     #     raise HTTPException(
@@ -43,7 +44,7 @@ async def updateEndPointStatus(endpointId: str, token: str):
     if token != os.environ['AGENT_TOKEN']:
         raise HTTPException(status_code=404, detail="Agent endpoint not found")
     endpoint_response = await endpointsmanager.changeEndpointsStatus(endpointId)
-    print("-----------------",endpoint_response)
+    logger.debug(endpoint_response)
     if not endpoint_response.get("success")==True:
         raise HTTPException(status_code=404, detail="Agent endpoint not updated")
 
@@ -53,8 +54,10 @@ async def updateEndPointStatus(endpointId: str, token: str):
 async def getEndPointStatus(agentId: str, token: str):
     if agentId != os.environ['AGENT_ID'] or token != os.environ['AGENT_TOKEN']:
         raise HTTPException(status_code=404, detail="Agent endpoint not found")
-
-    return {"success": True, "data": {"doc": endpointsmanager.getEndpoints()}}
+    
+    response= {"success": True, "data": {"doc": endpointsmanager.getEndpoints()}}
+    logger.debug(response)
+    return response
 
 async def addEndpoint(endpoint: dict, token: str):
     if token != os.environ['AGENT_TOKEN']:
@@ -63,11 +66,15 @@ async def addEndpoint(endpoint: dict, token: str):
     if "_id" in endpoint:
         endpoint["id"] = endpoint["_id"]
     endpoint_response = endpointsmanager.addEndpoint(endpoint)
-    return {"success": True, "data": {"doc": endpoint_response}}
+    response= {"success": True, "data": {"doc": endpoint_response}}
+    logger.debug(response)
+    return response
 
 async def deleteEndpoint(endpointId: str, token: str):
     if token != os.environ['AGENT_TOKEN']:
         raise HTTPException(status_code=404, detail="Agent endpoint not found")
 
     endpoint_response = endpointsmanager.deleteEndpoint(endpointId)
-    return {"success": True, "data": {"doc": endpoint_response}}
+    response= {"success": True, "data": {"doc": endpoint_response}}
+    logger.debug(response)
+    return response 

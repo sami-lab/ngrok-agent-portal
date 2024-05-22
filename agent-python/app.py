@@ -4,8 +4,8 @@ from utils.config import load_config
 from contextlib import asynccontextmanager
 import endpointsmanager
 
-# Ensure that NODE_ENV variable is set
-assert os.getenv("NODE_ENV") in ["development", "production"], "You must set the NODE_ENV variable to development or production"
+# Ensure that ENV variable is set
+assert os.getenv("ENV") in ["development", "production"], "You must set the ENV variable to development or production"
 
 
 

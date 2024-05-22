@@ -9,7 +9,7 @@ from routes.agentEndpoints import router as agent_router
 from utils.logger import logger  # Assuming you have a logger module
 
 def load_config(app):
-    env = os.getenv("NODE_ENV")
+    env = os.getenv("ENV")
 
     # Set logger in app
     app.logger = logger
@@ -30,7 +30,7 @@ def load_config(app):
     )
 
     # Static Files
-    app.mount("/public", StaticFiles(directory="public"), name="public")
+    #app.mount("/public", StaticFiles(directory="public"), name="public")
 
     # Compression middleware is not needed in FastAPI
 
