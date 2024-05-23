@@ -106,7 +106,7 @@ pip install -r  requirements.txt
 or to install all the packages listed in requirements.txt in the current directory for the current user.
 pip install --user -r requirements.txt
 cat << EOF >> .env
-NODE_ENV=development
+ENV=development
 PORT=8001
 
 BACKEND_URL=http://localhost:8000
