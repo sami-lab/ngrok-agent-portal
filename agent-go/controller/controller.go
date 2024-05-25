@@ -10,7 +10,7 @@ type Message struct {
 	Text string `json:"text"`
 }
 
-func GetHandler(w http.ResponseWriter, r *http.Request) {
+func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
 	// logRequest("GET", r)
 	// fmt.Fprintln(w, "GET request received")
 	// Create a sample response
@@ -31,17 +31,17 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
-func PostHandler(w http.ResponseWriter, r *http.Request) {
+func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 	logRequest("POST", r)
 	fmt.Fprintln(w, "POST request received")
 }
 
-func PutHandler(w http.ResponseWriter, r *http.Request) {
+func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	logRequest("PUT", r)
 	fmt.Fprintln(w, "PUT request received")
 }
 
-func DeleteHandler(w http.ResponseWriter, r *http.Request) {
+func DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
 	logRequest("DELETE", r)
 	fmt.Fprintln(w, "DELETE request received")
 }

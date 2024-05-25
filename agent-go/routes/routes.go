@@ -7,8 +7,8 @@ import (
 )
 
 func RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/get", controller.GetHandler).Methods("GET")
-	router.HandleFunc("/post", controller.PostHandler).Methods("POST")
-	router.HandleFunc("/put", controller.PutHandler).Methods("PUT")
-	router.HandleFunc("/delete", controller.DeleteHandler).Methods("DELETE")
+	router.HandleFunc("/getEndPointStatus", controller.GetEndPointStatus).Methods("GET")
+	router.HandleFunc("/addEndpoint", controller.AddEndpoint).Methods("POST")
+	router.HandleFunc("/updateStatus", controller.UpdateStatus).Methods("PATCH")
+	router.HandleFunc("/deleteEndpoint", controller.DeleteEndpoint).Methods("DELETE")
 }
