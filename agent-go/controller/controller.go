@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"agent-go/server/module"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,23 +12,35 @@ type Message struct {
 }
 
 func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
-	// logRequest("GET", r)
-	// fmt.Fprintln(w, "GET request received")
-	// Create a sample response
-	response := Message{
-		Text: "This is a sample response for GET request",
-	}
-
-	// Convert the response to JSON
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	logRequest("GET", r)
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Missing id query parameter", http.StatusBadRequest)
 		return
 	}
-
-	// Set content type and respond with the JSON
+	endpoint := module.GetEndpointStatus(id)
+	response := map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"doc": endpoint,
+		},
+	}
+	jsonResponse, _ := json.Marshal(response)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+func GetAllEndPoints(w http.ResponseWriter, r *http.Request) {
+	logRequest("GET", r)
+	endpointResponse := module.GetEndpoint()
+
+	response := map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"doc": endpointResponse,
+		},
+	}
+	jsonResponse, _ := json.Marshal(response)
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
 
