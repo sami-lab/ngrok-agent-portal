@@ -25,11 +25,21 @@ func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
 		w.Write(jsonResponse)
 		return
 	}
+	// endpoint := module.GetEndpointStatus(id)
+
 	endpoint := module.GetEndpointStatus(id)
+
+	doc := []interface{}{}
+	if endpoint != nil {
+		doc = append(doc, endpoint)
+	} else {
+		doc = append(doc, map[string]interface{}{})
+	}
+
 	response := map[string]interface{}{
 		"success": true,
 		"data": map[string]interface{}{
-			"doc": endpoint,
+			"doc": doc,
 		},
 	}
 	jsonResponse, _ := json.Marshal(response)
