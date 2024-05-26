@@ -113,8 +113,85 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateStatus(w http.ResponseWriter, r *http.Request) {
-	logRequest("PUT", r)
-	fmt.Fprintln(w, "PUT request received")
+	logRequest("PATCH", r)
+
+	id := r.URL.Query().Get("id")
+
+	if id == "" {
+		response := map[string]interface{}{
+			"success": false,
+			"error":   "Missing id query parameter",
+		}
+		jsonResponse, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
+		return
+	}
+
+	var requestData struct {
+		Status   string      `json:"status"`
+		Listener interface{} `json:"listener"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&requestData); err != nil {
+		response := map[string]interface{}{
+			"success": false,
+			"error":   "Invalid request body",
+		}
+		jsonResponse, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
+		return
+	}
+
+	if requestData.Status == "" {
+		response := map[string]interface{}{
+			"success": false,
+			"error":   "status is required",
+		}
+		jsonResponse, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
+		return
+	}
+
+	if requestData.Listener == nil {
+		response := map[string]interface{}{
+			"success": false,
+			"error":   "listener is required",
+		}
+		jsonResponse, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
+		return
+	}
+
+	updatedEndpoint, err := module.UpdateEndpoint(id, requestData.Status, requestData.Listener)
+	if err != nil {
+		response := map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		}
+		jsonResponse, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
+		return
+	}
+
+	response := map[string]interface{}{
+		"success": true,
+		"data":    updatedEndpoint,
+	}
+	jsonResponse, _ := json.Marshal(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+
 }
 
 func DeleteEndpoint(w http.ResponseWriter, r *http.Request) {

@@ -57,3 +57,22 @@ func DeleteEndpoint(id string) {
 		}
 	}
 }
+
+func UpdateEndpoint(id, status string, listener interface{}) (map[string]interface{}, error) {
+	if status == "" {
+		return nil, errors.New("status is required")
+	}
+	if listener == nil {
+		return nil, errors.New("listener is required")
+	}
+
+	for _, endpoint := range endpoints {
+		if endpoint["_id"] == id {
+			endpoint["status"] = status
+			endpoint["listener"] = listener
+			return endpoint, nil
+		}
+	}
+
+	return nil, errors.New("endpoint not found")
+}
