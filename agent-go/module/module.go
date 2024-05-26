@@ -1,13 +1,14 @@
 package module
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 )
 
 var endpoints []map[string]interface{}
 
 func init() {
-	// Initialize the state with one endpoint
 	endpoints = []map[string]interface{}{
 		{
 			"_id":      uuid.New().String(),
@@ -17,8 +18,7 @@ func init() {
 	}
 }
 
-// GetEndpoint returns the current state of endpoints
-func GetEndpoint() []map[string]interface{} {
+func GetAllEndPoints() []map[string]interface{} {
 	return endpoints
 }
 
@@ -31,8 +31,20 @@ func GetEndpointStatus(id string) map[string]interface{} {
 	return map[string]interface{}{}
 }
 
-// AddEndpoint adds a new endpoint to the state
-func AddEndpoint(endpoint map[string]interface{}) {
-	endpoint["_id"] = uuid.New().String()
-	endpoints = append(endpoints, endpoint)
+func AddEndpoint(status string, listener interface{}) (map[string]interface{}, error) {
+	if status == "" {
+		return nil, errors.New("status is required")
+	}
+	if listener == nil {
+		return nil, errors.New("listener is required")
+	}
+
+	newEndpoint := map[string]interface{}{
+		"_id":      uuid.New().String(),
+		"status":   status,
+		"listener": listener,
+	}
+
+	endpoints = append(endpoints, newEndpoint)
+	return newEndpoint, nil
 }

@@ -31,7 +31,7 @@ func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
 }
 func GetAllEndPoints(w http.ResponseWriter, r *http.Request) {
 	logRequest("GET", r)
-	endpointResponse := module.GetEndpoint()
+	endpointResponse := module.GetAllEndPoints()
 
 	response := map[string]interface{}{
 		"success": true,
@@ -46,7 +46,63 @@ func GetAllEndPoints(w http.ResponseWriter, r *http.Request) {
 
 func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 	logRequest("POST", r)
-	fmt.Fprintln(w, "POST request received")
+
+	var requestData struct {
+		Status   string      `json:"status"`
+		Listener interface{} `json:"listener"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&requestData); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if requestData.Status == "" {
+		response := map[string]interface{}{
+			"success": false,
+			"error":   "status is required",
+		}
+		jsonResponse, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
+		return
+	}
+
+	if requestData.Listener == nil {
+		response := map[string]interface{}{
+			"success": false,
+			"error":   "listener is required",
+		}
+		jsonResponse, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
+		return
+	}
+
+	newEndpoint, err := module.AddEndpoint(requestData.Status, requestData.Listener)
+	if err != nil {
+		response := map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		}
+		jsonResponse, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
+		return
+	}
+
+	response := map[string]interface{}{
+		"success": true,
+		"data":    newEndpoint,
+	}
+	jsonResponse, _ := json.Marshal(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(jsonResponse)
 }
 
 func UpdateStatus(w http.ResponseWriter, r *http.Request) {
