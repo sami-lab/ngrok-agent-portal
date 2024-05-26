@@ -1,0 +1,198 @@
+{
+	"info": {
+		"_postman_id": "02948750-90eb-4d22-8e06-fe7a327acb1c",
+		"name": "agent-go",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11614527"
+	},
+	"item": [
+		{
+			"name": "getEndPointStatus",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "AGENT_ID",
+						"value": "53d6584f-9823-46d3-b4c5-1d0c3801154f",
+						"type": "text"
+					},
+					{
+						"key": "AGENT_TOKEN",
+						"value": "bot_2ckSNXNt0jCAnKa0xBBBJUyjMsE",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"text\": \"Hello, server!\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/getEndPointStatus?id=f302a0b4-683a-4d20-a2c6-74f28fc1c9da",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"getEndPointStatus"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "f302a0b4-683a-4d20-a2c6-74f28fc1c9da"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "addEndpoint",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "AGENT_ID",
+						"value": "53d6584f-9823-46d3-b4c5-1d0c3801154f",
+						"type": "text"
+					},
+					{
+						"key": "AGENT_TOKEN",
+						"value": "bot_2ckSNXNt0jCAnKa0xBBBJUyjMsE",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"status\": \"test\",\n    \"listener\": \"test\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/addEndpoint",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"addEndpoint"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "updateStatus",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "AGENT_ID",
+						"value": "53d6584f-9823-46d3-b4c5-1d0c3801154f",
+						"type": "text"
+					},
+					{
+						"key": "AGENT_TOKEN",
+						"value": "bot_2ckSNXNt0jCAnKa0xBBBJUyjMsE",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"status\": \"hello\",\n    \"listener\": \"world\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/updateStatus?id=0f656b2a-e45b-4d1a-b075-9b66c7bb2b86",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"updateStatus"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "0f656b2a-e45b-4d1a-b075-9b66c7bb2b86"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deleteEndpoint",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "AGENT_ID",
+						"value": "53d6584f-9823-46d3-b4c5-1d0c3801154f",
+						"type": "text"
+					},
+					{
+						"key": "AGENT_TOKEN",
+						"value": "bot_2ckSNXNt0jCAnKa0xBBBJUyjMsE",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/deleteEndpoint?id=0f656b2a-e45b-4d1a-b075-9b66c7bb2b86",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"deleteEndpoint"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "0f656b2a-e45b-4d1a-b075-9b66c7bb2b86"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getAllEndPoints",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "AGENT_ID",
+						"value": "53d6584f-9823-46d3-b4c5-1d0c3801154f",
+						"type": "text"
+					},
+					{
+						"key": "AGENT_TOKEN",
+						"value": "bot_2ckSNXNt0jCAnKa0xBBBJUyjMsE",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/getAllEndPoints",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"getAllEndPoints"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
