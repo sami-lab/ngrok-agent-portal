@@ -21,7 +21,8 @@ async def initializeAgentConfig():
     if response.get("success")==True:
         endpoints = [{
             **x,
-            "status": "offline"
+            "status": "offline",
+            "listener": None
         } for x in response.get("data")]
 
 async def changeEndpointsStatus(id):
@@ -34,9 +35,11 @@ async def changeEndpointsStatus(id):
             try:
                 endpointYaml = yaml.safe_load(endpoint.get("endpointYaml"))
                 logger.debug(f"Starting endpoint {endpoint.get('name')} with options: {endpointYaml}")
-                # listener = ngrok.connect(**{**{"authtoken_from_env": True}, **endpointYaml})
-                # logger.info(f"Ingress established for endpoint {endpoint.get('name')} at: {listener.get("public_url")}")
-                # endpoint["listener"] = listener
+                listener:ngrok.Listener = await ngrok.forward(authtoken_from_env=True, proto="http", addr="localhost:8001", domain="sami.tunnels.ctindel-ngrok.com")
+                print("-------------",listener.url())
+                # listener = ngrok.forward(**{**{"authtoken_from_env": True}, **endpointYaml})
+                logger.info(f"Ingress established for endpoint {endpoint.get('name')} at: {listener.url()}")
+                #endpoint["listener"] = listener
                 endpoint["status"] = "online"
                 success = True
             except Exception as e:
@@ -44,7 +47,7 @@ async def changeEndpointsStatus(id):
         else:
             logger.debug(f"Stopping endpoint {endpoint['name']}")
             try:
-                #endpoint["listener"].close()
+                endpoint["listener"].close()
                 logger.info(f"Ingress closed")
                 endpoint["status"] = "offline"
                 success = True
