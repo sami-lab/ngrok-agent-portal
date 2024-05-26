@@ -50,7 +50,6 @@ func GetAllEndPoints(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
-
 func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 	logRequest("POST", r)
 
@@ -111,7 +110,6 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonResponse)
 }
-
 func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	logRequest("PATCH", r)
 
@@ -191,9 +189,7 @@ func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	jsonResponse, _ := json.Marshal(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
-
 }
-
 func DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
 	logRequest("DELETE", r)
 
@@ -220,7 +216,6 @@ func DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
-
 func logRequest(method string, r *http.Request) {
 	fmt.Printf("%s request to %s\n", method, r.URL.Path)
 }
