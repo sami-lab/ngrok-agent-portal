@@ -15,7 +15,14 @@ func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
 	logRequest("GET", r)
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		http.Error(w, "Missing id query parameter", http.StatusBadRequest)
+		response := map[string]interface{}{
+			"success": false,
+			"error":   "Missing id query parameter",
+		}
+		jsonResponse, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
 		return
 	}
 	endpoint := module.GetEndpointStatus(id)
@@ -112,7 +119,29 @@ func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 func DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
 	logRequest("DELETE", r)
-	fmt.Fprintln(w, "DELETE request received")
+
+	id := r.URL.Query().Get("id")
+
+	if id == "" {
+		response := map[string]interface{}{
+			"success": false,
+			"error":   "Missing id query parameter",
+		}
+		jsonResponse, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(jsonResponse)
+		return
+	}
+
+	module.DeleteEndpoint(id)
+
+	response := map[string]interface{}{
+		"success": true,
+	}
+	jsonResponse, _ := json.Marshal(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
 }
 
 func logRequest(method string, r *http.Request) {

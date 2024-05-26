@@ -48,3 +48,12 @@ func AddEndpoint(status string, listener interface{}) (map[string]interface{}, e
 	endpoints = append(endpoints, newEndpoint)
 	return newEndpoint, nil
 }
+
+func DeleteEndpoint(id string) {
+	for i, endpoint := range endpoints {
+		if endpoint["_id"] == id {
+			endpoints = append(endpoints[:i], endpoints[i+1:]...)
+			break
+		}
+	}
+}
