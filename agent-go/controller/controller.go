@@ -46,6 +46,15 @@ func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
+func GetAgentStatus(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{
+		"success": true,
+		"message": "Connected",
+	}
+	jsonResponse, _ := json.Marshal(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
 func GetAllEndPoints(w http.ResponseWriter, r *http.Request) {
 	logRequest("GET", r)
 	endpointResponse := module.GetAllEndPoints()
