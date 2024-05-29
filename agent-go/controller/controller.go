@@ -15,19 +15,8 @@ type Message struct {
 
 func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
 	logRequest("GET", r)
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "Missing id query parameter",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
-	// endpoint := module.GetEndpointStatus(id)
+	vars := mux.Vars(r)
+	id := vars["id"]
 
 	endpoint := module.GetEndpointStatus(id)
 
@@ -75,8 +64,8 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 	logRequest("POST", r)
 
 	var requestData struct {
-		Status   string      `json:"status"`
-		Listener interface{} `json:"listener"`
+		EndpointYaml string      `json:"endpointYaml"`
+		Listener     interface{} `json:"listener"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -85,31 +74,7 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if requestData.Status == "" {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "status is required",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
-
-	if requestData.Listener == nil {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "listener is required",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
-
-	newEndpoint, err := module.AddEndpoint(requestData.Status, requestData.Listener)
+	newEndpoint, err := module.AddEndpoint(requestData.EndpointYaml, requestData.Listener)
 	if err != nil {
 		response := map[string]interface{}{
 			"success": false,

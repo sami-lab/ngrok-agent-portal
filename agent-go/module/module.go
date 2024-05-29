@@ -81,18 +81,13 @@ func GetEndpointStatus(id string) map[string]interface{} {
 	return map[string]interface{}{}
 }
 
-func AddEndpoint(status string, listener interface{}) (map[string]interface{}, error) {
-	if status == "" {
-		return nil, errors.New("status is required")
-	}
-	if listener == nil {
-		return nil, errors.New("listener is required")
-	}
+func AddEndpoint(endpointYaml string, listener interface{}) (map[string]interface{}, error) {
 
 	newEndpoint := map[string]interface{}{
-		"_id":      uuid.New().String(),
-		"status":   status,
-		"listener": listener,
+		"_id":          uuid.New().String(),
+		"status":       "offline",
+		"listener":     listener,
+		"endpointYaml": endpointYaml,
 	}
 
 	endpoints = append(endpoints, newEndpoint)
