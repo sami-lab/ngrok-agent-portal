@@ -527,10 +527,17 @@ export default function FullFeaturedCrudGrid() {
     }
 
     //check agentAddress as correct url
-    if (validator.isURL(row.agentAddress)) {
+    if (
+      !validator.isURL(row.agentAddress, {
+        protocols: ["http", "https", "ftp"],
+        require_tld: false,
+        require_protocol: true,
+        allow_query_components: false,
+      })
+    ) {
       setShowToast({
         active: true,
-        message: "Invalid Agent Address",
+        message: "Invalid Agent Addresss",
         severity: "error",
       });
       return false;
