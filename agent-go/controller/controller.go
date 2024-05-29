@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type Message struct {
@@ -13,19 +15,8 @@ type Message struct {
 
 func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
 	logRequest("GET", r)
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "Missing id query parameter",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
-	// endpoint := module.GetEndpointStatus(id)
+	vars := mux.Vars(r)
+	id := vars["id"]
 
 	endpoint := module.GetEndpointStatus(id)
 
@@ -41,6 +32,15 @@ func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
 		"data": map[string]interface{}{
 			"doc": doc,
 		},
+	}
+	jsonResponse, _ := json.Marshal(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
+func GetAgentStatus(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{
+		"success": true,
+		"message": "Connected",
 	}
 	jsonResponse, _ := json.Marshal(response)
 	w.Header().Set("Content-Type", "application/json")
@@ -64,8 +64,8 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 	logRequest("POST", r)
 
 	var requestData struct {
-		Status   string      `json:"status"`
-		Listener interface{} `json:"listener"`
+		EndpointYaml string      `json:"endpointYaml"`
+		Listener     interface{} `json:"listener"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -74,31 +74,7 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if requestData.Status == "" {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "status is required",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
-
-	if requestData.Listener == nil {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "listener is required",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
-
-	newEndpoint, err := module.AddEndpoint(requestData.Status, requestData.Listener)
+	newEndpoint, err := module.AddEndpoint(requestData.EndpointYaml, requestData.Listener)
 	if err != nil {
 		response := map[string]interface{}{
 			"success": false,
@@ -121,65 +97,10 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 func UpdateStatus(w http.ResponseWriter, r *http.Request) {
-	logRequest("PATCH", r)
+	vars := mux.Vars(r)
+	id := vars["id"]
 
-	id := r.URL.Query().Get("id")
-
-	if id == "" {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "Missing id query parameter",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
-
-	var requestData struct {
-		Status   string      `json:"status"`
-		Listener interface{} `json:"listener"`
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&requestData); err != nil {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "Invalid request body",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
-
-	if requestData.Status == "" {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "status is required",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
-
-	if requestData.Listener == nil {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "listener is required",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
-
-	updatedEndpoint, err := module.UpdateEndpoint(id, requestData.Status, requestData.Listener)
+	updatedEndpoint, err := module.UpdateEndpointStatus(id)
 	if err != nil {
 		response := map[string]interface{}{
 			"success": false,
@@ -194,28 +115,18 @@ func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]interface{}{
 		"success": true,
-		"data":    updatedEndpoint,
+		"data": map[string]interface{}{
+			"doc": updatedEndpoint,
+		},
 	}
 	jsonResponse, _ := json.Marshal(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
+
 func DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
-	logRequest("DELETE", r)
-
-	id := r.URL.Query().Get("id")
-
-	if id == "" {
-		response := map[string]interface{}{
-			"success": false,
-			"error":   "Missing id query parameter",
-		}
-		jsonResponse, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonResponse)
-		return
-	}
+	vars := mux.Vars(r)
+	id := vars["id"]
 
 	module.DeleteEndpoint(id)
 
