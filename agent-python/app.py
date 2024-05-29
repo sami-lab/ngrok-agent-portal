@@ -15,6 +15,7 @@ async def lifespan(app: FastAPI):
     yield 
 # Create an instance of FastAPI
 app = FastAPI(lifespan=lifespan)
+#        title=settings.PROJECT_NAME, debug=settings.DEBUG, version=settings.VERSION
 
 # Load express configurations
 load_config(app)

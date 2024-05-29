@@ -31,7 +31,7 @@
     "mongoose": "^5.9.3",
     "morgan": "^1.10.0",
     "morgan-body": "^2.6.9",
-    "nodemon": "^2.0.4",
+    "nodemon": "^2.0.22",
     "serve-favicon": "^2.5.0",
     "validator": "^13.1.1",
     "xss-clean": "^0.1.1"
