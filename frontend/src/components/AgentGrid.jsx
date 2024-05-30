@@ -35,7 +35,6 @@ import { v4 as uuidv4 } from "uuid";
 import jsYaml from "js-yaml";
 import validator from "validator";
 import axiosInstance from "../utils/axios";
-import axios from "axios";
 import AgentEndpointsDialog from "./AgentEndpointsDialog";
 import RenderExpandableCell from "./RenderExpandableCell";
 import EditTextarea from "./EditTextarea";
@@ -192,7 +191,9 @@ export default function FullFeaturedCrudGrid() {
     let newAgentList = await Promise.all(
       rows.map(async (row) => {
         try {
-          const response = await axios.get(`${row.agentAddress}`);
+          const response = await axiosInstance.get(
+            `/agent/checkAgentStatus/${row.id}`
+          );
           if (response.data.success) {
             row.statusLoaded = true;
             row.status = "online";
