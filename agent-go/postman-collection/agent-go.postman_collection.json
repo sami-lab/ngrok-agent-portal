@@ -7,27 +7,30 @@
 	},
 	"item": [
 		{
+			"name": "hello",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}",
+					"host": [
+						"{{baseUrl}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "getEndPointStatus",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "AGENT_ID",
-						"value": "53d6584f-9823-46d3-b4c5-1d0c3801154f",
-						"type": "text"
-					},
-					{
-						"key": "AGENT_TOKEN",
-						"value": "bot_2ckSNXNt0jCAnKa0xBBBJUyjMsE",
-						"type": "text"
-					}
-				],
+				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"text\": \"Hello, server!\"\n}",
+					"raw": "",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -35,18 +38,13 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseUrl}}/getEndPointStatus?id=f302a0b4-683a-4d20-a2c6-74f28fc1c9da",
+					"raw": "{{baseUrl}}/getEndPointStatus/06de3c5a-b734-4a58-b84f-b9a5ded626m2",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
-						"getEndPointStatus"
-					],
-					"query": [
-						{
-							"key": "id",
-							"value": "f302a0b4-683a-4d20-a2c6-74f28fc1c9da"
-						}
+						"getEndPointStatus",
+						"06de3c5a-b734-4a58-b84f-b9a5ded626m2"
 					]
 				}
 			},
@@ -56,21 +54,10 @@
 			"name": "addEndpoint",
 			"request": {
 				"method": "POST",
-				"header": [
-					{
-						"key": "AGENT_ID",
-						"value": "53d6584f-9823-46d3-b4c5-1d0c3801154f",
-						"type": "text"
-					},
-					{
-						"key": "AGENT_TOKEN",
-						"value": "bot_2ckSNXNt0jCAnKa0xBBBJUyjMsE",
-						"type": "text"
-					}
-				],
+				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"status\": \"test\",\n    \"listener\": \"test\"\n}",
+					"raw": "{\n  \"createdOn\": \"2024-05-29T19:45:24.785Z\",\n  \"updatedOn\": \"2024-05-29T19:45:24.785Z\",\n  \"_id\": \"c516bc62-b6e4-42f1-8697-dcf773cfc132\",\n  \"name\": \"11\",\n  \"endpointYaml\": \"11\"\n}\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -78,12 +65,13 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseUrl}}/addEndpoint",
+					"raw": "{{baseUrl}}/addEndpoint/",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
-						"addEndpoint"
+						"addEndpoint",
+						""
 					]
 				}
 			},
@@ -93,21 +81,10 @@
 			"name": "updateStatus",
 			"request": {
 				"method": "PATCH",
-				"header": [
-					{
-						"key": "AGENT_ID",
-						"value": "53d6584f-9823-46d3-b4c5-1d0c3801154f",
-						"type": "text"
-					},
-					{
-						"key": "AGENT_TOKEN",
-						"value": "bot_2ckSNXNt0jCAnKa0xBBBJUyjMsE",
-						"type": "text"
-					}
-				],
+				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"status\": \"hello\",\n    \"listener\": \"world\"\n}",
+					"raw": "",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -115,18 +92,13 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseUrl}}/updateStatus?id=0f656b2a-e45b-4d1a-b075-9b66c7bb2b86",
+					"raw": "{{baseUrl}}/updateStatus/06de3c5a-b734-4a58-b84f-b9a5ded626c9",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
-						"updateStatus"
-					],
-					"query": [
-						{
-							"key": "id",
-							"value": "0f656b2a-e45b-4d1a-b075-9b66c7bb2b86"
-						}
+						"updateStatus",
+						"06de3c5a-b734-4a58-b84f-b9a5ded626c9"
 					]
 				}
 			},
@@ -136,18 +108,7 @@
 			"name": "deleteEndpoint",
 			"request": {
 				"method": "DELETE",
-				"header": [
-					{
-						"key": "AGENT_ID",
-						"value": "53d6584f-9823-46d3-b4c5-1d0c3801154f",
-						"type": "text"
-					},
-					{
-						"key": "AGENT_TOKEN",
-						"value": "bot_2ckSNXNt0jCAnKa0xBBBJUyjMsE",
-						"type": "text"
-					}
-				],
+				"header": [],
 				"url": {
 					"raw": "{{baseUrl}}/deleteEndpoint?id=0f656b2a-e45b-4d1a-b075-9b66c7bb2b86",
 					"host": [
@@ -170,18 +131,7 @@
 			"name": "getAllEndPoints",
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "AGENT_ID",
-						"value": "53d6584f-9823-46d3-b4c5-1d0c3801154f",
-						"type": "text"
-					},
-					{
-						"key": "AGENT_TOKEN",
-						"value": "bot_2ckSNXNt0jCAnKa0xBBBJUyjMsE",
-						"type": "text"
-					}
-				],
+				"header": [],
 				"url": {
 					"raw": "{{baseUrl}}/getAllEndPoints",
 					"host": [
@@ -193,6 +143,51 @@
 				}
 			},
 			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"// Getting from env and setting AGENT_ID and AGENT_TOKEN",
+					"const agentId = pm.environment.get(\"AGENT_ID\");",
+					"const agentToken = pm.environment.get(\"AGENT_TOKEN\");",
+					"",
+					"",
+					"// Add the AGENT_ID and AGENT_TOKEN to request headers",
+					"pm.request.headers.add({ key: \"AGENT_ID\", value: agentId });",
+					"pm.request.headers.add({ key: \"AGENT_TOKEN\", value: agentToken });",
+					"",
+					"// If you want to add them to the query parameters as well",
+					"let url = pm.request.url;",
+					"",
+					"// // Check and add AGENT_ID query parameter",
+					"// if (!url.getQueryString({ key: 'AGENT_ID' })) {",
+					"//     url.addQueryParams({ key: 'AGENT_ID', value: agentId });",
+					"// }",
+					"",
+					"// // Check and add AGENT_TOKEN query parameter",
+					"// if (!url.getQueryString({ key: 'AGENT_TOKEN' })) {",
+					"//     url.addQueryParams({ key: 'AGENT_TOKEN', value: agentToken });",
+					"// }",
+					"",
+					"pm.request.url = url;",
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }
