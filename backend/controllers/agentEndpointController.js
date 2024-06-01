@@ -13,6 +13,7 @@ exports.getEndpointStatus = catchAsync(async (req, res, next) => {
       `${doc?.agentAddress}/getEndPointStatus/${doc._id}`,
       {
         headers: {
+          id: doc._id,
           token: doc.agentToken,
         },
       }
@@ -62,6 +63,7 @@ exports.updateEndPointStatus = catchAsync(async (req, res, next) => {
       method: "Patch",
       url: `${doc.agentAddress}/updateStatus/${req.params.endpointId}`,
       headers: {
+        id: doc._id,
         token: doc.agentToken,
       },
     });
@@ -174,6 +176,7 @@ exports.createEndpoint = catchAsync(async (req, res, next) => {
       newEndPointDoc,
       {
         headers: {
+          id: doc._id,
           token: doc.agentToken,
         },
       }
@@ -214,6 +217,7 @@ exports.deleteEndpoint = catchAsync(async (req, res, next) => {
       method: "delete",
       url: `${doc.agentAddress}/deleteEndpoint/${req.params.endpointId}`,
       headers: {
+        id: doc._id,
         token: doc.agentToken,
       },
     });

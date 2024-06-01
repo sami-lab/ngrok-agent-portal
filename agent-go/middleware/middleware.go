@@ -22,8 +22,8 @@ func init() {
 
 func Authentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := r.Header.Get("AGENT_ID")
-		token := r.Header.Get("AGENT_TOKEN")
+		id := r.Header.Get("id")
+		token := r.Header.Get("token")
 
 		if id != agentID || token != agentToken {
 			response := map[string]interface{}{
