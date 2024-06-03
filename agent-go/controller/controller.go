@@ -66,6 +66,7 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 	var requestData struct {
 		EndpointYaml string      `json:"endpointYaml"`
 		Listener     interface{} `json:"listener"`
+		Id           string      `json:"_id"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -74,7 +75,7 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newEndpoint, err := module.AddEndpoint(requestData.EndpointYaml, requestData.Listener)
+	newEndpoint, err := module.AddEndpoint(requestData.Id, requestData.EndpointYaml, requestData.Listener)
 	if err != nil {
 		response := map[string]interface{}{
 			"success": false,

@@ -8,8 +8,6 @@ import (
 	"net/http"
 
 	"os"
-
-	"github.com/google/uuid"
 )
 
 var endpoints []map[string]interface{}
@@ -81,10 +79,10 @@ func GetEndpointStatus(id string) map[string]interface{} {
 	return map[string]interface{}{}
 }
 
-func AddEndpoint(endpointYaml string, listener interface{}) (map[string]interface{}, error) {
+func AddEndpoint(id string, endpointYaml string, listener interface{}) (map[string]interface{}, error) {
 
 	newEndpoint := map[string]interface{}{
-		"_id":          uuid.New().String(),
+		"_id":          id,
 		"status":       "offline",
 		"listener":     listener,
 		"endpointYaml": endpointYaml,
