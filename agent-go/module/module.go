@@ -1,13 +1,14 @@
 package module
 
 import (
-	"errors"
-
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"os"
+
+	"gopkg.in/yaml.v2"
 )
 
 var endpoints []map[string]interface{}
@@ -102,19 +103,38 @@ func DeleteEndpoint(id string) {
 		}
 	}
 }
+func loadEndpointYaml(endpoint map[string]interface{}) (map[string]interface{}, error) {
+	yamlContent, ok := endpoint["endpointYaml"].(string)
+	if !ok {
+		return nil, fmt.Errorf("endpointYaml not found or is not a string")
+	}
 
+	var endpointYaml map[string]interface{}
+	err := yaml.Unmarshal([]byte(yamlContent), &endpointYaml)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling endpointYaml: %v", err)
+	}
+
+	return endpointYaml, nil
+}
 func UpdateEndpointStatus(id string) (map[string]interface{}, error) {
 	for _, endpoint := range endpoints {
 		if endpoint["id"] == id {
 			if endpoint["status"] == "offline" {
 				endpoint["status"] = "online"
+
+				endpointYaml, err := loadEndpointYaml(endpoint)
+				if err != nil {
+					return nil, err
+				}
+				fmt.Printf("Loaded YAML for endpoint %s: %v\n", endpoint["id"], endpointYaml)
+
 				return endpoint, nil
 			} else {
 				endpoint["status"] = "offline"
 				return endpoint, nil
-
 			}
 		}
 	}
-	return nil, errors.New("endpoint not found")
+	return nil, fmt.Errorf("endpoint with id %s not found", id)
 }
