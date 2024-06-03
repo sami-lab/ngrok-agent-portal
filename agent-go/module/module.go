@@ -41,20 +41,28 @@ func FetchAgentConfig() {
 		log.Fatalf("Non-200 response from server: %d %s", resp.StatusCode, resp.Status)
 	}
 
+	log.Println("HTTP request successful")
+
 	var apiResp map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		log.Fatalf("Error decoding JSON response: %v", err)
 	}
+
+	log.Println("JSON response decoded successfully")
 
 	data, ok := apiResp["data"].(map[string]interface{})
 	if !ok {
 		log.Fatalf("Unexpected JSON structure: missing 'data' field")
 	}
 
+	log.Println("Found 'data' field in JSON response")
+
 	doc, ok := data["doc"].([]interface{})
 	if !ok {
 		log.Fatalf("Unexpected JSON structure: 'doc' field is not an array")
 	}
+
+	log.Printf("Found %d items in 'doc' array", len(doc))
 
 	endpoints = make([]map[string]interface{}, len(doc))
 	for i, item := range doc {
@@ -66,6 +74,13 @@ func FetchAgentConfig() {
 		endpoints[i] = endpoint
 		endpoints[i]["id"] = endpoint["_id"]
 		delete(endpoints[i], "_id")
+	}
+
+	log.Println("Endpoints processed successfully")
+
+	log.Println("Final endpoints:")
+	for i, endpoint := range endpoints {
+		log.Printf("Endpoint %d: %+v", i, endpoint)
 	}
 }
 
