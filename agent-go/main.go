@@ -11,12 +11,10 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
 		log.Println("Error loading .env file, using default settings")
 	}
 
-	// Use the environment variable PORT or default to "8000"
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8000"

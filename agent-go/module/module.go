@@ -103,19 +103,28 @@ func DeleteEndpoint(id string) {
 		}
 	}
 }
-func loadEndpointYaml(endpoint map[string]interface{}) (map[string]interface{}, error) {
+func isValidYAML(yamlContent string) bool {
+	var content interface{}
+	err := yaml.Unmarshal([]byte(yamlContent), &content)
+	return err == nil
+}
+
+func loadEndpointYaml(endpoint map[string]interface{}) (interface{}, error) {
 	yamlContent, ok := endpoint["endpointYaml"].(string)
 	if !ok {
 		return nil, fmt.Errorf("endpointYaml not found or is not a string")
 	}
 
-	var endpointYaml map[string]interface{}
-	err := yaml.Unmarshal([]byte(yamlContent), &endpointYaml)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling endpointYaml: %v", err)
+	if isValidYAML(yamlContent) {
+		var endpointYaml interface{}
+		err := yaml.Unmarshal([]byte(yamlContent), &endpointYaml)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshalling endpointYaml: %v", err)
+		}
+		return endpointYaml, nil
 	}
 
-	return endpointYaml, nil
+	return nil, fmt.Errorf("invalid YAML content")
 }
 func UpdateEndpointStatus(id string) (map[string]interface{}, error) {
 	for _, endpoint := range endpoints {
