@@ -2,8 +2,10 @@ package controller
 
 import (
 	"agent-go/server/module"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -38,6 +40,7 @@ func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 func GetAgentStatus(w http.ResponseWriter, r *http.Request) {
+	logRequest("GET", r)
 	response := map[string]interface{}{
 		"success": true,
 		"message": "Connected",
@@ -98,6 +101,9 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 func UpdateStatus(w http.ResponseWriter, r *http.Request) {
+
+	logRequest("PATCH", r)
+
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -126,6 +132,8 @@ func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
+	logRequest("DELETE", r)
+
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -140,4 +148,19 @@ func DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
 }
 func logRequest(method string, r *http.Request) {
 	fmt.Printf("%s request to %s\n", method, r.URL.Path)
+
+	if method == http.MethodPost {
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			fmt.Println("Error reading request body:", err)
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		if len(bodyBytes) > 0 {
+			fmt.Printf("Request body: %s\n", string(bodyBytes))
+		} else {
+			fmt.Println("Request body is empty")
+		}
+	}
 }
