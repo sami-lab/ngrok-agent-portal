@@ -63,6 +63,8 @@ func FetchAgentConfig() {
 		}
 		endpoint["status"] = "offline"
 		endpoints[i] = endpoint
+		endpoints[i]["id"] = endpoint["_id"]
+		delete(endpoints[i], "_id")
 	}
 }
 
@@ -72,7 +74,7 @@ func GetAllEndPoints() []map[string]interface{} {
 
 func GetEndpointStatus(id string) map[string]interface{} {
 	for _, endpoint := range endpoints {
-		if endpoint["_id"] == id {
+		if endpoint["id"] == id {
 			return endpoint
 		}
 	}
@@ -82,7 +84,7 @@ func GetEndpointStatus(id string) map[string]interface{} {
 func AddEndpoint(id string, endpointYaml string, listener interface{}) (map[string]interface{}, error) {
 
 	newEndpoint := map[string]interface{}{
-		"_id":          id,
+		"id":           id,
 		"status":       "offline",
 		"listener":     listener,
 		"endpointYaml": endpointYaml,
@@ -94,7 +96,7 @@ func AddEndpoint(id string, endpointYaml string, listener interface{}) (map[stri
 
 func DeleteEndpoint(id string) {
 	for i, endpoint := range endpoints {
-		if endpoint["_id"] == id {
+		if endpoint["id"] == id {
 			endpoints = append(endpoints[:i], endpoints[i+1:]...)
 			break
 		}
@@ -103,7 +105,7 @@ func DeleteEndpoint(id string) {
 
 func UpdateEndpointStatus(id string) (map[string]interface{}, error) {
 	for _, endpoint := range endpoints {
-		if endpoint["_id"] == id {
+		if endpoint["id"] == id {
 			if endpoint["status"] == "offline" {
 				endpoint["status"] = "online"
 				return endpoint, nil

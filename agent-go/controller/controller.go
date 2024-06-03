@@ -1,11 +1,9 @@
 package controller
 
 import (
+	"agent-go/server/middleware"
 	"agent-go/server/module"
-	"bytes"
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -16,7 +14,7 @@ type Message struct {
 }
 
 func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
-	logRequest("GET", r)
+	middleware.LogRequest("GET", r)
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -40,7 +38,7 @@ func GetEndPointStatus(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 func GetAgentStatus(w http.ResponseWriter, r *http.Request) {
-	logRequest("GET", r)
+	middleware.LogRequest("GET", r)
 	response := map[string]interface{}{
 		"success": true,
 		"message": "Connected",
@@ -50,7 +48,7 @@ func GetAgentStatus(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 func GetAllEndPoints(w http.ResponseWriter, r *http.Request) {
-	logRequest("GET", r)
+	middleware.LogRequest("GET", r)
 	endpointResponse := module.GetAllEndPoints()
 
 	response := map[string]interface{}{
@@ -64,7 +62,7 @@ func GetAllEndPoints(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 func AddEndpoint(w http.ResponseWriter, r *http.Request) {
-	logRequest("POST", r)
+	middleware.LogRequest("POST", r)
 
 	var requestData struct {
 		EndpointYaml string      `json:"endpointYaml"`
@@ -102,7 +100,7 @@ func AddEndpoint(w http.ResponseWriter, r *http.Request) {
 }
 func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
-	logRequest("PATCH", r)
+	middleware.LogRequest("PATCH", r)
 
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -132,7 +130,7 @@ func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
-	logRequest("DELETE", r)
+	middleware.LogRequest("DELETE", r)
 
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -145,22 +143,4 @@ func DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
 	jsonResponse, _ := json.Marshal(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
-}
-func logRequest(method string, r *http.Request) {
-	fmt.Printf("%s request to %s\n", method, r.URL.Path)
-
-	if method == http.MethodPost {
-		bodyBytes, err := io.ReadAll(r.Body)
-		if err != nil {
-			fmt.Println("Error reading request body:", err)
-			return
-		}
-		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
-		if len(bodyBytes) > 0 {
-			fmt.Printf("Request body: %s\n", string(bodyBytes))
-		} else {
-			fmt.Println("Request body is empty")
-		}
-	}
 }

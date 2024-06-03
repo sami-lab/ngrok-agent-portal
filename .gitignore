@@ -36,3 +36,4 @@ package-lock.json
 launch.json
 .vscode
 __pycache__
+__debug*
