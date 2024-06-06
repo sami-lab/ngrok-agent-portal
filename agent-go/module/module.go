@@ -1,15 +1,36 @@
 package module
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 
 	"os"
 
+	"golang.ngrok.com/ngrok"
+	ngrok_config "golang.ngrok.com/ngrok/config"
+	ngrok_log "golang.ngrok.com/ngrok/log"
 	"gopkg.in/yaml.v2"
 )
+
+type logger struct {
+	lvl ngrok_log.LogLevel
+}
+
+func (l *logger) Log(ctx context.Context, lvl ngrok_log.LogLevel, msg string, data map[string]interface{}) {
+	if lvl > l.lvl {
+		return
+	}
+	lvlName, _ := ngrok_log.StringFromLogLevel(lvl)
+	log.Printf("[%s] %s %v", lvlName, msg, data)
+}
+
+var l *logger = &logger{
+	lvl: ngrok_log.LogLevelDebug,
+}
 
 var endpoints []map[string]interface{}
 
@@ -141,12 +162,65 @@ func loadEndpointYaml(endpoint map[string]interface{}) (interface{}, error) {
 
 	return nil, fmt.Errorf("invalid YAML content")
 }
+
+func run(ctx context.Context, backend *url.URL, authtoken string, domain string) error {
+	log.Println("Connecting to ngrok...")
+	sess, err := ngrok.Connect(ctx,
+		ngrok.WithAuthtoken(authtoken),
+		ngrok.WithLogger(&logger{lvl: ngrok_log.LogLevelDebug}),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to connect to ngrok: %w", err)
+	}
+	log.Println("Successfully connected to ngrok.")
+
+	for {
+		log.Println("Setting up forwarding...")
+		fwd, err := sess.ListenAndForward(ctx,
+			backend,
+			ngrok_config.HTTPEndpoint(
+				ngrok_config.WithDomain(domain), // Specify the custom domain
+			),
+		)
+		if err != nil {
+			return err
+		}
+
+		l.Log(ctx, ngrok_log.LogLevelInfo, "ingress established", map[string]any{
+			"url": fwd.URL(),
+		})
+
+		err = fwd.Wait()
+		if err == nil {
+			return nil
+		}
+		l.Log(ctx, ngrok_log.LogLevelWarn, "accept error. now setting up a new forwarder.",
+			map[string]any{"err": err})
+
+	}
+}
+
 func UpdateEndpointStatus(id string) (map[string]interface{}, error) {
+
 	for _, endpoint := range endpoints {
 		if endpoint["id"] == id {
 			if endpoint["status"] == "offline" {
 				endpoint["status"] = "online"
 
+				proto := "http"
+				addr := "localhost:8001"
+				authtoken := os.Getenv("NGROK_AUTH_TOKEN")
+				domain := os.Getenv("NGROK_DOMAIN")
+
+				backend := fmt.Sprintf("%s://%s", proto, addr)
+				backendUrl, err := url.Parse(backend)
+				if err != nil {
+					log.Fatalf("Failed to parse backend URL: %v", err)
+				}
+
+				if err := run(context.Background(), backendUrl, authtoken, domain); err != nil {
+					log.Fatal(err)
+				}
 				endpointYaml, err := loadEndpointYaml(endpoint)
 				if err != nil {
 					return nil, err
