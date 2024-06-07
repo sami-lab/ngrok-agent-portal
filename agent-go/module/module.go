@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-
 	"os"
+	"sync"
 
 	"golang.ngrok.com/ngrok"
 	ngrok_config "golang.ngrok.com/ngrok/config"
@@ -32,7 +32,11 @@ var l *logger = &logger{
 	lvl: ngrok_log.LogLevelDebug,
 }
 
-var endpoints []map[string]interface{}
+var (
+	endpoints = []map[string]interface{}{}
+	listeners = make(map[string]ngrok.Forwarder) // Change to ngrok.Forwarder
+	mu        sync.Mutex
+)
 
 func FetchAgentConfig() {
 	agentID := os.Getenv("AGENT_ID")
@@ -119,7 +123,6 @@ func GetEndpointStatus(id string) map[string]interface{} {
 }
 
 func AddEndpoint(id string, endpointYaml string, listener interface{}) (map[string]interface{}, error) {
-
 	newEndpoint := map[string]interface{}{
 		"id":           id,
 		"status":       "offline",
@@ -132,13 +135,20 @@ func AddEndpoint(id string, endpointYaml string, listener interface{}) (map[stri
 }
 
 func DeleteEndpoint(id string) {
+	mu.Lock()
+	defer mu.Unlock()
 	for i, endpoint := range endpoints {
 		if endpoint["id"] == id {
+			if listener, ok := listeners[id]; ok {
+				listener.Close()
+				delete(listeners, id)
+			}
 			endpoints = append(endpoints[:i], endpoints[i+1:]...)
 			break
 		}
 	}
 }
+
 func isValidYAML(yamlContent string) bool {
 	var content interface{}
 	err := yaml.Unmarshal([]byte(yamlContent), &content)
@@ -163,7 +173,7 @@ func loadEndpointYaml(endpoint map[string]interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("invalid YAML content")
 }
 
-func run(ctx context.Context, backend *url.URL, authtoken string, domain string) error {
+func run(ctx context.Context, backend *url.URL, authtoken string, domain string, id string) error {
 	log.Println("Connecting to ngrok...")
 	sess, err := ngrok.Connect(ctx,
 		ngrok.WithAuthtoken(authtoken),
@@ -174,34 +184,56 @@ func run(ctx context.Context, backend *url.URL, authtoken string, domain string)
 	}
 	log.Println("Successfully connected to ngrok.")
 
-	for {
-		log.Println("Setting up forwarding...")
-		fwd, err := sess.ListenAndForward(ctx,
-			backend,
-			ngrok_config.HTTPEndpoint(
-				ngrok_config.WithDomain(domain), // Specify the custom domain
-			),
-		)
-		if err != nil {
-			return err
-		}
-
-		l.Log(ctx, ngrok_log.LogLevelInfo, "ingress established", map[string]any{
-			"url": fwd.URL(),
-		})
-
-		err = fwd.Wait()
-		if err == nil {
-			return nil
-		}
-		l.Log(ctx, ngrok_log.LogLevelWarn, "accept error. now setting up a new forwarder.",
-			map[string]any{"err": err})
-
+	log.Println("Setting up forwarding...")
+	fwd, err := sess.ListenAndForward(ctx,
+		backend,
+		ngrok_config.HTTPEndpoint(
+			ngrok_config.WithDomain(domain), // Specify the custom domain
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to listen and forward: %w", err)
 	}
+
+	log.Printf("Ingress established: %s", fwd.URL())
+
+	mu.Lock()
+	listeners[id] = fwd // Store the listener in the map
+	mu.Unlock()
+
+	// Optionally: Start a goroutine to wait for the forwarder to complete
+	go func() {
+		err := fwd.Wait()
+		if err != nil {
+			log.Printf("Forwarder error: %v", err)
+			// Optionally: Handle the error, retry, etc.
+		}
+	}()
+
+	return nil
+}
+
+func stopNgrokListener(id string) error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	listener, exists := listeners[id]
+	if !exists {
+		return fmt.Errorf("listener with id %s not found", id)
+	}
+
+	log.Printf("Stopping ngrok listener for id: %s", id)
+	if err := listener.Close(); err != nil {
+		return fmt.Errorf("failed to stop ngrok listener: %w", err)
+	}
+
+	delete(listeners, id) // Remove listener from the map
+	log.Printf("ngrok listener for id %s stopped successfully", id)
+
+	return nil
 }
 
 func UpdateEndpointStatus(id string) (map[string]interface{}, error) {
-
 	for _, endpoint := range endpoints {
 		if endpoint["id"] == id {
 			if endpoint["status"] == "offline" {
@@ -218,7 +250,7 @@ func UpdateEndpointStatus(id string) (map[string]interface{}, error) {
 					log.Fatalf("Failed to parse backend URL: %v", err)
 				}
 
-				if err := run(context.Background(), backendUrl, authtoken, domain); err != nil {
+				if err := run(context.Background(), backendUrl, authtoken, domain, id); err != nil {
 					log.Fatal(err)
 				}
 				endpointYaml, err := loadEndpointYaml(endpoint)
@@ -230,6 +262,9 @@ func UpdateEndpointStatus(id string) (map[string]interface{}, error) {
 				return endpoint, nil
 			} else {
 				endpoint["status"] = "offline"
+				if err := stopNgrokListener(id); err != nil {
+					log.Fatalf("Failed to stop ngrok listener: %v", err)
+				}
 				return endpoint, nil
 			}
 		}
