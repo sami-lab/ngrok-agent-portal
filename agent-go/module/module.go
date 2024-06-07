@@ -209,8 +209,8 @@ func UpdateEndpointStatus(id string) (map[string]interface{}, error) {
 
 				proto := "http"
 				addr := "localhost:8001"
-				authtoken := os.Getenv("NGROK_AUTH_TOKEN")
-				domain := os.Getenv("NGROK_DOMAIN")
+				authtoken := os.Getenv("NGROK_AUTHTOKEN")
+				domain := "sami.tunnels.ctindel-ngrok.com"
 
 				backend := fmt.Sprintf("%s://%s", proto, addr)
 				backendUrl, err := url.Parse(backend)
