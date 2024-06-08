@@ -8,8 +8,8 @@ import (
 )
 
 func RegisterRoutes(router *mux.Router) {
-	router.Use(middleware.Authentication)
 	router.HandleFunc("/", controller.GetAgentStatus).Methods("GET")
+	router.Use(middleware.Authentication)
 	router.HandleFunc("/getEndPointStatus/{id}", controller.GetAllEndPoints).Methods("GET")
 	router.HandleFunc("/getAllEndPoints", controller.GetAllEndPoints).Methods("GET")
 	router.HandleFunc("/addEndpoint/", controller.AddEndpoint).Methods("POST")
