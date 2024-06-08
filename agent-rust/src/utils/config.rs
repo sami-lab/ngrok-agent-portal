@@ -1,20 +1,38 @@
-use actix_web::{middleware, web, App, HttpResponse, HttpServer};
-use actix_cors::Cors;
+use actix_web::{web, App, HttpResponse, HttpServer};
+use actix_web::middleware::{Logger, Compress};
+use actix_web::web::JsonConfig;
 use actix_files::Files;
-use crate::routes::agent_endpoints;
+use actix_service::Service;
+use actix_cors::Cors;
+use std::sync::Mutex;
 use std::collections::HashMap;
+
+mod agent_endpoints;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub logger: Logger,
+    // Add other shared state here if needed
+}
 
 pub fn load_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
-        web::scope("")
-            .configure(agent_endpoints::config)
+        web::resource("/api/v1/test")
+            .route(web::get().to(|| async {
+                HttpResponse::Ok().json(HashMap::from([
+                    ("status", "Test Backend Success")
+                ]))
+            }))
     );
 
-    // Middleware
-    cfg.app_data(web::JsonConfig::default().limit(4096))
-        .wrap(middleware::Logger::default())
-        .wrap(middleware::Compress::default())
-        .wrap(Cors::permissive());
+    // Load agent endpoints routes
+    agent_endpoints::configure(cfg);
+
+    // Example of setting up middleware
+    cfg.app_data(JsonConfig::default().limit(4096))
+       .wrap(Logger::default())
+       .wrap(Compress::default())
+       .wrap(Cors::default());
 
     // Static files
     cfg.service(Files::new("/public", "./public").show_files_listing());
@@ -22,12 +40,9 @@ pub fn load_config(cfg: &mut web::ServiceConfig) {
     // Custom error handlers
     cfg.default_service(
         web::route().to(|| async {
-            HttpResponse::NotFound().json(HashMap::from([("error", "Not Found")]))
+            HttpResponse::NotFound().json(HashMap::from([
+                ("error", "Not Found")
+            ]))
         })
     );
-}
-
-pub fn create_app() -> App {
-    App::new()
-        .configure(load_config)
 }

@@ -1,107 +1,92 @@
+use crate::controllers::agent_endpoint_controller::AgentConfig;
 use crate::utils::logger;
-use actix_web::web::Data;
+use log::{debug, error, info};
 use serde_yaml;
 use std::sync::{Arc, Mutex};
-
-#[derive(Clone, Debug)]
-pub struct Endpoint {
-    pub id: String,
-    pub name: String,
-    pub endpoint_yaml: String,
-    pub status: String,
-    pub listener: Option<ngrok::Session>,
-}
+use tokio::sync::RwLock;
+use tokio::task;
 
 pub struct EndpointManager {
-    endpoints: Arc<Mutex<Vec<Endpoint>>>,
+    endpoints: Arc<RwLock<Vec<AgentConfig>>>,
 }
 
 impl EndpointManager {
     pub fn new() -> Self {
-        EndpointManager {
-            endpoints: Arc::new(Mutex::new(Vec::new())),
+        Self {
+            endpoints: Arc::new(RwLock::new(Vec::new())),
         }
     }
 
-    pub async fn initialize_agent_config(&self) {
-        let response = agent_endpoint_controller::fetch_agent_config().await;
-        if response.success {
-            let mut endpoints = self.endpoints.lock().unwrap();
-            *endpoints = response.data.into_iter().map(|x| {
-                Endpoint {
-                    id: x.id,
-                    name: x.name,
-                    endpoint_yaml: x.endpoint_yaml,
-                    status: "offline".to_string(),
-                    listener: None,
-                }
+    pub async fn initialize_agent_config(&self, fetch_agent_config: impl Fn() -> task::JoinHandle<Result<Vec<AgentConfig>, Box<dyn std::error::Error>>>) {
+        let response = fetch_agent_config().await;
+        if let Ok(configs) = response {
+            let mut endpoints = self.endpoints.write().await;
+            *endpoints = configs.into_iter().map(|mut config| {
+                config.status = "offline".to_string();
+                config
             }).collect();
+            info!("Agent config initialized.");
+        } else {
+            error!("Failed to fetch agent config.");
         }
     }
 
-    pub async fn change_endpoints_status(&self, id: &str) -> (bool, Vec<Endpoint>) {
-        let mut endpoints = self.endpoints.lock().unwrap();
+    pub async fn change_endpoint_status(&self, id: &str) -> Result<Vec<AgentConfig>, Box<dyn std::error::Error>> {
+        let mut endpoints = self.endpoints.write().await;
+        let mut success = false;
+
         if let Some(endpoint) = endpoints.iter_mut().find(|e| e.id == id) {
             if endpoint.status == "offline" {
-                logger::debug(&format!("{:?}", endpoint));
-                let endpoint_yaml: serde_yaml::Value = match serde_yaml::from_str(&endpoint.endpoint_yaml) {
+                debug!("{:?}", endpoint);
+                let endpoint_yaml = match serde_yaml::from_str::<serde_yaml::Value>(&endpoint.endpoint_yaml) {
                     Ok(yaml) => yaml,
-                    Err(yaml_error) => {
-                        logger::error(&format!("Failed to parse YAML for endpoint {}: {}", id, yaml_error));
-                        return (false, endpoints.clone());
+                    Err(e) => {
+                        error!("Failed to parse YAML for endpoint {}: {}", id, e);
+                        return Ok(endpoints.clone());
                     }
                 };
 
-                logger::debug(&format!("Starting endpoint {} with options: {:?}", endpoint.name, endpoint_yaml));
-                match ngrok::Session::builder()
-                    .authtoken_from_env()
-                    .parse(endpoint_yaml)
-                    .start()
-                    .await
-                {
+                debug!("Starting endpoint {} with options: {:?}", endpoint.name, endpoint_yaml);
+                match ngrok::start_tunnel(endpoint_yaml).await {
                     Ok(listener) => {
-                        println!("Ingress established for endpoint {} at: {}", endpoint.name, listener.http().url());
-                        endpoint.listener = Some(listener);
+                        info!("Ingress established for endpoint {} at: {}", endpoint.name, listener.url());
                         endpoint.status = "online".to_string();
-                        return (true, endpoints.clone());
+                        success = true;
                     }
-                    Err(err) => {
-                        println!("Listener setup error: {}", err);
-                        return (false, endpoints.clone());
+                    Err(e) => {
+                        error!("Failed to start listener for endpoint {}: {}", id, e);
                     }
                 }
             } else {
-                logger::debug(&format!("Stopping endpoint {}", endpoint.name));
-                if let Some(listener) = endpoint.listener.take() {
-                    if listener.close().await.is_ok() {
-                        println!("Ingress closed");
+                debug!("Stopping endpoint {}", endpoint.name);
+                match endpoint.listener.close().await {
+                    Ok(_) => {
+                        info!("Ingress closed for endpoint {}", endpoint.name);
                         endpoint.status = "offline".to_string();
-                        return (true, endpoints.clone());
+                        success = true;
+                    }
+                    Err(e) => {
+                        error!("Failed to close listener for endpoint {}: {}", id, e);
                     }
                 }
-                return (false, endpoints.clone());
             }
         }
-        (false, endpoints.clone())
+
+        Ok(endpoints.clone())
     }
 
-    pub fn get_endpoints(&self) -> Vec<Endpoint> {
-        self.endpoints.lock().unwrap().clone()
-    }
-
-    pub fn add_endpoint(&self, endpoint: Endpoint) -> Vec<Endpoint> {
-        let mut endpoints = self.endpoints.lock().unwrap();
-        endpoints.push(Endpoint {
-            status: "offline".to_string(),
-            listener: None,
-            ..endpoint
-        });
+    pub async fn get_endpoints(&self) -> Vec<AgentConfig> {
+        let endpoints = self.endpoints.read().await;
         endpoints.clone()
     }
 
-    pub fn delete_endpoint(&self, id: &str) -> Vec<Endpoint> {
-        let mut endpoints = self.endpoints.lock().unwrap();
+    pub async fn add_endpoint(&self, endpoint: AgentConfig) {
+        let mut endpoints = self.endpoints.write().await;
+        endpoints.push(endpoint);
+    }
+
+    pub async fn delete_endpoint(&self, id: &str) {
+        let mut endpoints = self.endpoints.write().await;
         endpoints.retain(|e| e.id != id);
-        endpoints.clone()
     }
 }
