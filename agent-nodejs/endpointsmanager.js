@@ -45,6 +45,7 @@ async function changeEndpointsStatus(id, agentToken) {
     try {
       const listener = await ngrok.forward({
         ...{ authtoken: agentToken },
+        //...{ authtoken_from_env: true },
         ...endpointYaml,
       });
       console.log(
@@ -60,10 +61,11 @@ async function changeEndpointsStatus(id, agentToken) {
         data: endpoints,
       };
     } catch (err) {
-      console.log("listener setup error: " + err);
+      console.log("listener setup error: " + err.message);
       success = false;
       return {
         success,
+        error: err.message,
         data: endpoints,
       };
     }

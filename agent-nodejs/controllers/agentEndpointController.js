@@ -70,7 +70,7 @@ exports.updateEndPointStatus = catchAsync(async (req, res, next) => {
   );
 
   if (!endpointResponse.success) {
-    return next(new AppError("Agent endpoint not updated", 404));
+    return next(new AppError(endpointResponse.error, 422));
   }
 
   const newEndPointDoc = endpointResponse.data.find((x) => x._id === id);

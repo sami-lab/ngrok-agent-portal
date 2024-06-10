@@ -67,7 +67,7 @@ exports.updateEndPointStatus = catchAsync(async (req, res, next) => {
         token: doc.agentToken,
       },
     });
-
+    console.log(response);
     if (response.data.success) {
       res.status(200).json({
         success: true,
@@ -76,11 +76,18 @@ exports.updateEndPointStatus = catchAsync(async (req, res, next) => {
         },
       });
     } else {
-      return next(new AppError("Agent endpoint not updated", 422));
+      return next(
+        new AppError(response.data.message || "Agent endpoint not updated", 422)
+      );
     }
   } catch (err) {
     console.log(err);
-    return next(new AppError("Agent endpoint not updated", 422));
+    return next(
+      new AppError(
+        err.response?.data?.message || "Agent endpoint not updated",
+        422
+      )
+    );
   }
 });
 
