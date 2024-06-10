@@ -104,8 +104,9 @@ func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id := vars["id"]
+    agentToken := r.Header.Get("token")
 
-	updatedEndpoint, err := module.UpdateEndpointStatus(id)
+	updatedEndpoint, err := module.UpdateEndpointStatus(id,agentToken)
 	if err != nil {
 		response := map[string]interface{}{
 			"success": false,

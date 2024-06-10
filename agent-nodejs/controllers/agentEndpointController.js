@@ -15,7 +15,10 @@ exports.getAgentStatus = catchAsync(async (req, res, next) => {
 //this will fetch all agent endpointsto maintain internal list
 exports.fetchAgentConfig = async () => {
   try {
-    logger.debug("fetching agent config from " + `${process.env.BACKEND_URL}/api/v1/endpoint/${process.env.AGENT_ID}`)
+    logger.debug(
+      "fetching agent config from " +
+        `${process.env.BACKEND_URL}/api/v1/endpoint/${process.env.AGENT_ID}`
+    );
     const response = await axios({
       method: "Get",
       url: `${process.env.BACKEND_URL}/api/v1/endpoint/${process.env.AGENT_ID}`,
@@ -61,7 +64,10 @@ exports.updateEndPointStatus = catchAsync(async (req, res, next) => {
     return next(new AppError("Agent endpoint not found", 404));
   }
 
-  let endpointResponse = await endpointManager.changeEndpointsStatus(id);
+  let endpointResponse = await endpointManager.changeEndpointsStatus(
+    id,
+    agentToken
+  );
 
   if (!endpointResponse.success) {
     return next(new AppError("Agent endpoint not updated", 404));

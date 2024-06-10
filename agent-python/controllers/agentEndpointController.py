@@ -43,7 +43,7 @@ async def fetchAgentConfig():
 async def updateEndPointStatus(endpointId: str, token: str):
     if token != os.environ['AGENT_TOKEN']:
         raise HTTPException(status_code=404, detail="Agent endpoint not found")
-    endpoint_response = await endpointsmanager.changeEndpointsStatus(endpointId)
+    endpoint_response = await endpointsmanager.changeEndpointsStatus(endpointId,token)
     logger.debug(endpoint_response)
     if not endpoint_response.get("success")==True:
         raise HTTPException(status_code=404, detail="Agent endpoint not updated")

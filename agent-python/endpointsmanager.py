@@ -27,7 +27,7 @@ async def initializeAgentConfig():
             #"listener": None
         } for x in response.get("data")]
 
-async def changeEndpointsStatus(id):
+async def changeEndpointsStatus(id,agentToken):
     global endpoints, listeners
     success = False
     endpoint = next((e for e in endpoints if e["id"] == id), None)
@@ -37,7 +37,7 @@ async def changeEndpointsStatus(id):
             try:
                 endpointYaml = yaml.safe_load(endpoint.get("endpointYaml"))
                 logger.debug(f"Starting endpoint {endpoint.get('name')} with options: {endpointYaml}")
-                listener:ngrok.Listener = await ngrok.forward(authtoken_from_env=True, proto="http", addr="localhost:8001", domain="sami.tunnels.ctindel-ngrok.com")
+                listener:ngrok.Listener = await ngrok.forward(authtoken=agentToken, proto="http", addr="localhost:8001", domain="sami.tunnels.ctindel-ngrok.com")
                 # listener = ngrok.forward(**{**{"authtoken_from_env": True}, **endpointYaml})
                 logger.info(f"Ingress established for endpoint {endpoint.get('name')} at: {listener.url()}")
                 listeners[id] = listener  # Store listener in the dictionary

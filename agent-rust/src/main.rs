@@ -6,7 +6,7 @@ mod routes;
 
 use crate::controllers::agent_endpoint_controller::AgentEndpointController;
 use crate::endpoint_manager::EndpointManager;
-use crate::utils::express::create_app;
+use crate::utils::config::load_config;
 use actix_web::HttpServer;
 use dotenv::dotenv;
 use log::{error, info};

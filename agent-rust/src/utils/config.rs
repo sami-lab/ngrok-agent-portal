@@ -35,7 +35,7 @@ pub fn load_config(cfg: &mut web::ServiceConfig) {
        .wrap(Cors::default());
 
     // Static files
-    cfg.service(Files::new("/public", "./public").show_files_listing());
+    //cfg.service(Files::new("/public", "./public").show_files_listing());
 
     // Custom error handlers
     cfg.default_service(
