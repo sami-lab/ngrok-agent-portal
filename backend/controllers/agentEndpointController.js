@@ -67,7 +67,6 @@ exports.updateEndPointStatus = catchAsync(async (req, res, next) => {
         token: doc.agentToken,
       },
     });
-    console.log(response);
     if (response.data.success) {
       res.status(200).json({
         success: true,
@@ -81,7 +80,7 @@ exports.updateEndPointStatus = catchAsync(async (req, res, next) => {
       );
     }
   } catch (err) {
-    console.log(err);
+    console.log("----------------", err.response?.data);
     return next(
       new AppError(
         err.response?.data?.message || "Agent endpoint not updated",

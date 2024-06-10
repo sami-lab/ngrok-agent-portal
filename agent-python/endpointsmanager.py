@@ -1,7 +1,7 @@
 import logging
 import yaml
 import ngrok
-
+from utils.appError import AppError
 # Import logger from utils.logger module
 from utils.logger import logger
 
@@ -30,6 +30,7 @@ async def initializeAgentConfig():
 async def changeEndpointsStatus(id,agentToken):
     global endpoints, listeners
     success = False
+    error = None
     endpoint = next((e for e in endpoints if e["id"] == id), None)
     if endpoint:
         if endpoint.get("status") == "offline":
@@ -37,7 +38,7 @@ async def changeEndpointsStatus(id,agentToken):
             try:
                 endpointYaml = yaml.safe_load(endpoint.get("endpointYaml"))
                 logger.debug(f"Starting endpoint {endpoint.get('name')} with options: {endpointYaml}")
-                listener:ngrok.Listener = await ngrok.forward(authtoken=agentToken, proto="http", addr="localhost:8001", domain="sami.tunnels.ctindel-ngrok.com")
+                listener:ngrok.Listener = await ngrok.forward(authtoken="", proto="http", addr="localhost:8001", domain="sami.tunnels.ctindel-ngrok.com")
                 # listener = ngrok.forward(**{**{"authtoken_from_env": True}, **endpointYaml})
                 logger.info(f"Ingress established for endpoint {endpoint.get('name')} at: {listener.url()}")
                 listeners[id] = listener  # Store listener in the dictionary
@@ -46,6 +47,8 @@ async def changeEndpointsStatus(id,agentToken):
                 success = True
             except Exception as e:
                 logger.error(f"Listener setup error: {e}")
+                error= e.args[1]
+
         else:
             logger.debug(f"Stopping endpoint {endpoint['name']}")
             try:
@@ -58,7 +61,8 @@ async def changeEndpointsStatus(id,agentToken):
                 success = True
             except Exception as e:
                 logger.error(f"Listener close error: {e}")
-    return {"success": success, "data": endpoints}
+                error= e.args[1]
+    return {"success": success,"endpoints": endpoints,"error": error }
 
 def getEndpoints():
     return endpoints

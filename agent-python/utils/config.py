@@ -1,5 +1,6 @@
 import os
 import logging
+from utils.appError import AppError 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import RedirectResponse
@@ -7,6 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi import Request
 from routes.agentEndpoints import router as agent_router
 from utils.logger import logger  # Assuming you have a logger module
+from fastapi.responses import JSONResponse
+
 
 def load_config(app):
     env = os.getenv("ENV")
@@ -42,6 +45,15 @@ def load_config(app):
 
     # Xss-clean middleware (for XSS prevention) is not needed in FastAPI
 
+    @app.exception_handler(AppError)
+    async def unicorn_exception_handler(request: Request, exc: AppError):
+            return JSONResponse(
+                status_code=exc.status_code,
+                content= {
+                     "message": exc.message
+                }
+            )
+    
     # test routes
     @app.get("/api/v1/test")
     def test_backend():

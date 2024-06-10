@@ -1,6 +1,8 @@
 import logging
 import requests
 import os
+from utils.appError import AppError
+
 from fastapi import HTTPException
 from utils.logger import logger
 import endpointsmanager     
@@ -46,7 +48,7 @@ async def updateEndPointStatus(endpointId: str, token: str):
     endpoint_response = await endpointsmanager.changeEndpointsStatus(endpointId,token)
     logger.debug(endpoint_response)
     if not endpoint_response.get("success")==True:
-        raise HTTPException(status_code=404, detail="Agent endpoint not updated")
+        raise AppError(status_code=404,detail=endpoint_response.get("error") or "Agent endpoint not updated")
 
     new_end_point_doc = next((x for x in endpoint_response.get("data") if x["_id"] == endpointId), None)
     return {"success": True, "data": {"doc": new_end_point_doc}}
