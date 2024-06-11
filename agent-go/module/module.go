@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
+	"time"
 
 	"golang.ngrok.com/ngrok"
 	ngrok_config "golang.ngrok.com/ngrok/config"
@@ -175,11 +177,20 @@ func loadEndpointYaml(endpoint map[string]interface{}) (interface{}, error) {
 
 func run(ctx context.Context, backend *url.URL, authtoken string, domain string, id string) error {
 	log.Println("Connecting to ngrok...")
-	sess, err := ngrok.Connect(ctx,
+
+	// 10 seconds timeout to avoid indefinite retries
+	connectCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	// Try connecting to ngrok with a timeout context
+	sess, err := ngrok.Connect(connectCtx,
 		ngrok.WithAuthtoken(authtoken),
 		ngrok.WithLogger(&logger{lvl: ngrok_log.LogLevelDebug}),
 	)
 	if err != nil {
+		if strings.Contains(err.Error(), "authentication failed") {
+			return fmt.Errorf("invalid ngrok authtoken: %w", err)
+		}
 		return fmt.Errorf("failed to connect to ngrok: %w", err)
 	}
 	log.Println("Successfully connected to ngrok.")
@@ -233,7 +244,7 @@ func stopNgrokListener(id string) error {
 	return nil
 }
 
-func UpdateEndpointStatus(id string,authToken string) (map[string]interface{}, error) {
+func UpdateEndpointStatus(id string, authToken string) (map[string]interface{}, error) {
 	for _, endpoint := range endpoints {
 		if endpoint["id"] == id {
 			if endpoint["status"] == "offline" {
@@ -241,8 +252,6 @@ func UpdateEndpointStatus(id string,authToken string) (map[string]interface{}, e
 
 				proto := "http"
 				addr := "localhost:8001"
-				//authtoken := os.Getenv("NGROK_AUTHTOKEN")
-				authtoken := authToken
 				domain := "sami.tunnels.ctindel-ngrok.com"
 
 				backend := fmt.Sprintf("%s://%s", proto, addr)
@@ -251,9 +260,13 @@ func UpdateEndpointStatus(id string,authToken string) (map[string]interface{}, e
 					log.Fatalf("Failed to parse backend URL: %v", err)
 				}
 
-				if err := run(context.Background(), backendUrl, authtoken, domain, id); err != nil {
-					log.Fatal(err)
+				if err := run(context.Background(), backendUrl, authToken, domain, id); err != nil {
+					if strings.Contains(err.Error(), "invalid ngrok authtoken") {
+						return nil, fmt.Errorf("invalid ngrok authtoken: %w", err)
+					}
+					return nil, err
 				}
+
 				endpointYaml, err := loadEndpointYaml(endpoint)
 				if err != nil {
 					return nil, err

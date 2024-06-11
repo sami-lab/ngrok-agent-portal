@@ -5,6 +5,7 @@ import (
 	"agent-go/server/module"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"fmt"
 
@@ -119,6 +120,17 @@ func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 	updatedEndpoint, err := module.UpdateEndpointStatus(id, authToken)
 	if err != nil {
+		if strings.Contains(err.Error(), "invalid ngrok authtoken") {
+			response := map[string]interface{}{
+				"success": false,
+				"error":   "Invalid ngrok authtoken",
+			}
+			jsonResponse, _ := json.Marshal(response)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized) // 401 Unauthorized
+			w.Write(jsonResponse)
+			return
+		}
 		response := map[string]interface{}{
 			"success": false,
 			"error":   err.Error(),
