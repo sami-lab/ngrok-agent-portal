@@ -42,15 +42,15 @@ async def fetchAgentConfig():
         logger.debug("Error in fetching agent config",err)
         return {"success": False, "message": "Something went wrong"}
 
-async def updateEndPointStatus(endpointId: str, token: str):
+async def updateEndPointStatus(endpointId: str, token: str,authToken:str):
     if token != os.environ['AGENT_TOKEN']:
         raise HTTPException(status_code=404, detail="Agent endpoint not found")
-    endpoint_response = await endpointsmanager.changeEndpointsStatus(endpointId,token)
+    endpoint_response = await endpointsmanager.changeEndpointsStatus(endpointId,authToken)
     logger.debug(endpoint_response)
     if not endpoint_response.get("success")==True:
         raise AppError(status_code=404,detail=endpoint_response.get("error") or "Agent endpoint not updated")
 
-    new_end_point_doc = next((x for x in endpoint_response.get("data") if x["_id"] == endpointId), None)
+    new_end_point_doc = next((x for x in endpoint_response.get("endpoints") if x["_id"] == endpointId), None)
     return {"success": True, "data": {"doc": new_end_point_doc}}
 
 async def getEndPointStatus(agentId: str, token: str):

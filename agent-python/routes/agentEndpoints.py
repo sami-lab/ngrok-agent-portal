@@ -18,7 +18,8 @@ def getAgentStatusRoute():
 # Route to update status of endpoint
 @router.patch("/updateStatus/{endpointId}")
 async def updateEndPointStatusRoute(request: Request, endpointId: str):
-     return await updateEndPointStatus(endpointId= endpointId,token=  request.headers.get("token"))
+     request_body =await request.json()
+     return await updateEndPointStatus(endpointId= endpointId,token=  request.headers.get("token"),authToken=request_body.get("authToken"))
 
 
 # Route to get all endpoints status 

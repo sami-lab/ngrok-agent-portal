@@ -17,7 +17,7 @@ async function initializeAgentConfig() {
   }
 }
 
-async function changeEndpointsStatus(id, agentToken) {
+async function changeEndpointsStatus(id, authToken) {
   let success = false;
 
   const endpoint = endpoints.find((e) => e.id === id);
@@ -44,7 +44,7 @@ async function changeEndpointsStatus(id, agentToken) {
     );
     try {
       const listener = await ngrok.forward({
-        ...{ authtoken: agentToken },
+        ...{ authtoken: authToken },
         //...{ authtoken_from_env: true },
         ...endpointYaml,
       });

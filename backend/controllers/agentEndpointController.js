@@ -62,6 +62,9 @@ exports.updateEndPointStatus = catchAsync(async (req, res, next) => {
     const response = await axios({
       method: "Patch",
       url: `${doc.agentAddress}/updateStatus/${req.params.endpointId}`,
+      data: {
+        authToken: doc.authToken,
+      },
       headers: {
         id: doc._id,
         token: doc.agentToken,

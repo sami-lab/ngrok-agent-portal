@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 )
+import "fmt"
 
 type Message struct {
 	Text string `json:"text"`
@@ -102,11 +103,20 @@ func UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 	middleware.LogRequest("PATCH", r)
 
+	var requestData struct {
+		AuthToken string      `json:"authToken"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&requestData); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	fmt.Print("----------------, ",requestData)
 	vars := mux.Vars(r)
 	id := vars["id"]
-    agentToken := r.Header.Get("token")
+    authToken := requestData.AuthToken
 
-	updatedEndpoint, err := module.UpdateEndpointStatus(id,agentToken)
+	updatedEndpoint, err := module.UpdateEndpointStatus(id,authToken)
 	if err != nil {
 		response := map[string]interface{}{
 			"success": false,

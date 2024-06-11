@@ -60,13 +60,14 @@ exports.fetchAgentConfig = async () => {
 exports.updateEndPointStatus = catchAsync(async (req, res, next) => {
   const id = req.params.endpointId;
   const agentToken = req.headers.token;
+  const authToken = req.body.authToken;
   if (agentToken !== process.env.AGENT_TOKEN) {
     return next(new AppError("Agent endpoint not found", 404));
   }
 
   let endpointResponse = await endpointManager.changeEndpointsStatus(
     id,
-    agentToken
+    authToken
   );
 
   if (!endpointResponse.success) {
