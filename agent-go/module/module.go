@@ -260,7 +260,7 @@ func UpdateEndpointStatus(id string, authToken string) (map[string]interface{}, 
 				endpoint["status"] = "online"
 
 				proto := "http"
-				addr := "localhost:8001"
+				addr := "localhost:8080"
 				domain := "sami.tunnels.ctindel-ngrok.com"
 
 				backend := fmt.Sprintf("%s://%s", proto, addr)
