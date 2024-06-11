@@ -175,7 +175,7 @@ func loadEndpointYaml(endpoint map[string]interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("invalid YAML content")
 }
 
-func run(ctx context.Context, backend *url.URL, authtoken string, domain string, id string) error {
+func run(ctx context.Context, backend *url.URL, authtoken string, domain string, id string, endpointYaml interface{}) error {
 	log.Println("Connecting to ngrok...")
 
 	// 10 seconds timeout to avoid indefinite retries
@@ -196,12 +196,21 @@ func run(ctx context.Context, backend *url.URL, authtoken string, domain string,
 	log.Println("Successfully connected to ngrok.")
 
 	log.Println("Setting up forwarding...")
-	fwd, err := sess.ListenAndForward(ctx,
-		backend,
-		ngrok_config.HTTPEndpoint(
-			ngrok_config.WithDomain(domain), // Specify the custom domain
-		),
-	)
+
+	// Convert endpointYaml to ngrok options
+	options := []ngrok_config.HTTPEndpointOption{
+		ngrok_config.WithDomain(domain),
+	}
+
+	// Process the endpointYaml to add additional options
+	if configMap, ok := endpointYaml.(map[string]interface{}); ok {
+		if domain, exists := configMap["domain"].(string); exists {
+			options = append(options, ngrok_config.WithDomain(domain))
+		}
+		// Add other configuration options based on endpointYaml
+	}
+
+	fwd, err := sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
 	if err != nil {
 		return fmt.Errorf("failed to listen and forward: %w", err)
 	}
@@ -260,18 +269,18 @@ func UpdateEndpointStatus(id string, authToken string) (map[string]interface{}, 
 					log.Fatalf("Failed to parse backend URL: %v", err)
 				}
 
-				if err := run(context.Background(), backendUrl, authToken, domain, id); err != nil {
-					if strings.Contains(err.Error(), "invalid ngrok authtoken") {
-						return nil, fmt.Errorf("invalid ngrok authtoken: %w", err)
-					}
-					return nil, err
-				}
-
 				endpointYaml, err := loadEndpointYaml(endpoint)
 				if err != nil {
 					return nil, err
 				}
 				fmt.Printf("Loaded YAML for endpoint %s: %v\n", endpoint["id"], endpointYaml)
+
+				if err := run(context.Background(), backendUrl, authToken, domain, id, endpointYaml); err != nil {
+					if strings.Contains(err.Error(), "invalid ngrok authtoken") {
+						return nil, fmt.Errorf("invalid ngrok authtoken: %w", err)
+					}
+					return nil, err
+				}
 
 				return endpoint, nil
 			} else {
