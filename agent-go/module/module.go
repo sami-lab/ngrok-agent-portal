@@ -233,7 +233,7 @@ func stopNgrokListener(id string) error {
 	return nil
 }
 
-func UpdateEndpointStatus(id string,agentToken string) (map[string]interface{}, error) {
+func UpdateEndpointStatus(id string,authToken string) (map[string]interface{}, error) {
 	for _, endpoint := range endpoints {
 		if endpoint["id"] == id {
 			if endpoint["status"] == "offline" {
@@ -242,7 +242,7 @@ func UpdateEndpointStatus(id string,agentToken string) (map[string]interface{}, 
 				proto := "http"
 				addr := "localhost:8001"
 				//authtoken := os.Getenv("NGROK_AUTHTOKEN")
-				authtoken := agentToken
+				authtoken := authToken
 				domain := "sami.tunnels.ctindel-ngrok.com"
 
 				backend := fmt.Sprintf("%s://%s", proto, addr)
