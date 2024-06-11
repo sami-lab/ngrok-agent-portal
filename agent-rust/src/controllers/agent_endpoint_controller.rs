@@ -1,5 +1,5 @@
 use crate::utils::logger;
-use crate::endpoint_manager::EndpointManager;
+use crate::endpoints_manager::EndpointManager;
 use actix_web::{web, HttpResponse, Responder};
 use log::info;
 use reqwest::Client;

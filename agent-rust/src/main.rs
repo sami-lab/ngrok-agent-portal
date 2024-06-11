@@ -1,82 +1,34 @@
+use actix_web::{App, HttpServer, middleware::Logger};
+use std::sync::{Arc, Mutex};
+use env_logger::Env;
+
 mod app;
 mod controllers;
-mod endpoint_manager;
-mod utils;
+mod endpoints_manager;
 mod routes;
-
-use crate::controllers::agent_endpoint_controller::AgentEndpointController;
-use crate::endpoint_manager::EndpointManager;
-use crate::utils::config::load_config;
-use actix_web::HttpServer;
-use dotenv::dotenv;
-use log::{error, info};
-use std::env;
-use std::sync::{Arc, Mutex};
-use std::thread;
-use tokio::signal::unix::{signal, SignalKind};
-
-struct AppState {
-    endpoint_manager: Arc<EndpointManager>,
-}
+mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    dotenv().ok();
-    env_logger::init();
-    info!("Logger initialized");
+    dotenv::dotenv().ok();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-    let endpoint_manager = Arc::new(EndpointManager::new());
-    let app_state = AppState {
-        endpoint_manager: endpoint_manager.clone(),
-    };
+    let endpoint_manager = Arc::new(Mutex::new(endpoint_manager::EndpointManager::new()));
+    let agent_endpoint_controller = controllers::agent_endpoint_controller::AgentEndpointController::new(endpoint_manager.clone());
 
-    let port: u16 = env::var("PORT").unwrap_or_else(|_| "3001".to_string()).parse().expect("PORT must be a number");
-    let server = HttpServer::new(move || {
+    // Initialize agent configuration
+    agent_endpoint_controller.initialize_agent_config().await;
+
+    let address = "127.0.0.1:8080";
+    println!("Starting server at: {}", address);
+
+    HttpServer::new(move || {
         App::new()
-            .app_data(actix_web::web::Data::new(app_state.clone()))
-            .configure(utils::express::load_config)
+            .wrap(Logger::default())
+            .app_data(actix_web::web::Data::new(agent_endpoint_controller.clone()))
+            .configure(routes::agent_endpoints::configure)
     })
-    .bind(("127.0.0.1", port))?
-    .run();
-
-    info!("Listening on port {}", port);
-
-    let endpoint_manager_clone = endpoint_manager.clone();
-    thread::spawn(move || {
-        tokio::runtime::Runtime::new().unwrap().block_on(async {
-            let controller = AgentEndpointController::new(endpoint_manager_clone);
-            controller.initialize_agent_config().await;
-        });
-    });
-
-    let mut sigterm = signal(SignalKind::terminate()).expect("Failed to create SIGTERM signal handler");
-    tokio::select! {
-        _ = server => {},
-        _ = sigterm.recv() => {
-            info!("SIGTERM received.. shutting down");
-        }
-    }
-
-    Ok(())
-}
-
-fn setup_panic_handler() {
-    std::panic::set_hook(Box::new(|panic_info| {
-        error!("Uncaught exception: {:?}", panic_info);
-        std::process::exit(1);
-    }));
-}
-
-fn setup_unhandled_rejection_handler() {
-    tokio::spawn(async {
-        // Placeholder for handling unhandled rejections
-    });
-}
-
-fn main() {
-    setup_panic_handler();
-    setup_unhandled_rejection_handler();
-    if let Err(e) = main() {
-        error!("Application error: {:?}", e);
-    }
+    .bind(address)?
+    .run()
+    .await
 }

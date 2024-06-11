@@ -1,6 +1,6 @@
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, App};
 
-mod utils;
+use crate::utils;
 
 pub fn create_app() -> App {
     App::new()

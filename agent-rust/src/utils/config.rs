@@ -7,7 +7,7 @@ use actix_cors::Cors;
 use std::sync::Mutex;
 use std::collections::HashMap;
 
-mod agent_endpoints;
+use crate::routes::agent_endpoints;
 
 #[derive(Clone)]
 pub struct AppState {
