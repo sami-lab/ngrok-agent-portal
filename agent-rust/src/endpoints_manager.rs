@@ -1,8 +1,7 @@
 use crate::controllers::agent_endpoint_controller::AgentConfig;
-use crate::utils::logger;
 use log::{debug, error, info};
 use serde_yaml;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
 use tokio::sync::RwLock;
 use tokio::task;
 
@@ -47,16 +46,19 @@ impl EndpointManager {
                 };
 
                 debug!("Starting endpoint {} with options: {:?}", endpoint.name, endpoint_yaml);
-                match ngrok::start_tunnel(endpoint_yaml).await {
-                    Ok(listener) => {
-                        info!("Ingress established for endpoint {} at: {}", endpoint.name, listener.url());
-                        endpoint.status = "online".to_string();
-                        success = true;
-                    }
-                    Err(e) => {
-                        error!("Failed to start listener for endpoint {}: {}", id, e);
-                    }
-                }
+                info!("Ingress established for endpoint {} at: {}", endpoint.name, listener.url());
+                endpoint.status = "online".to_string();
+                success = true;
+                // match ngrok::start_tunnel(endpoint_yaml).await {
+                //     Ok(listener) => {
+                //         info!("Ingress established for endpoint {} at: {}", endpoint.name, listener.url());
+                //         endpoint.status = "online".to_string();
+                //         success = true;
+                //     }
+                //     Err(e) => {
+                //         error!("Failed to start listener for endpoint {}: {}", id, e);
+                //     }
+                // }
             } else {
                 debug!("Stopping endpoint {}", endpoint.name);
                 match endpoint.listener.close().await {

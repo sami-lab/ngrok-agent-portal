@@ -1,24 +1,22 @@
 use crate::utils::logger;
-use crate::endpoints_manager::EndpointManager;
-use actix_web::{web, HttpResponse, Responder};
-use log::info;
+use crate::endpoint_managers::EndpointManager;
+use actix_web::{ HttpResponse, Responder};
+use log::{info, error}; // Import the `error` macro from the `log` crate
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
-use actix_web::error::ErrorInternalServerError;
-use serde_json::json;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AgentConfig {
-    id: String,
-    name: String,
-    endpoint_yaml: String,
-    status: String,
+    pub id: String,
+    pub name: String,
+    pub endpoint_yaml: String,
+    pub status: String,
 }
 
 pub struct AgentEndpointController {
-    endpoint_manager: Arc<Mutex<EndpointManager>>,
-    client: Client,
+    pub endpoint_manager: Arc<Mutex<EndpointManager>>,
+    pub client: Client,
 }
 
 impl AgentEndpointController {
@@ -57,13 +55,13 @@ impl AgentEndpointController {
                 info!("Agent config initialized.");
             }
             Err(e) => {
-                logger::error(&format!("Failed to fetch agent config: {}", e));
+               error(&format!("Failed to fetch agent config: {}", e));
             }
         }
     }
 
     pub async fn get_agent_status(&self) -> impl Responder {
-        HttpResponse::Ok().json(json!({
+        HttpResponse::Ok().json(serde_json::json!({
             "success": true,
             "message": "Connected"
         }))
@@ -72,11 +70,11 @@ impl AgentEndpointController {
     pub async fn update_endpoint_status(&self, id: String) -> impl Responder {
         let mut endpoint_manager = self.endpoint_manager.lock().unwrap();
         match endpoint_manager.change_endpoint_status(&id).await {
-            Ok(endpoints) => HttpResponse::Ok().json(json!({
+            Ok(endpoints) => HttpResponse::Ok().json(serde_json::json!({
                 "success": true,
                 "data": { "doc": endpoints.iter().find(|e| e.id == id) }
             })),
-            Err(_) => HttpResponse::NotFound().json(json!({
+            Err(_) => HttpResponse::NotFound().json(serde_json::json!({
                 "success": false,
                 "message": "Agent endpoint not updated"
             })),
@@ -85,14 +83,14 @@ impl AgentEndpointController {
 
     pub async fn get_endpoint_status(&self, agent_id: String, agent_token: String) -> impl Responder {
         if agent_id != std::env::var("AGENT_ID").unwrap() || agent_token != std::env::var("AGENT_TOKEN").unwrap() {
-            return HttpResponse::NotFound().json(json!({
+            return HttpResponse::NotFound().json(serde_json::json!({
                 "success": false,
                 "message": "Agent endpoint not found"
             }));
         }
 
         let endpoint_manager = self.endpoint_manager.lock().unwrap();
-        HttpResponse::Ok().json(json!({
+        HttpResponse::Ok().json(serde_json::json!({
             "success": true,
             "data": { "doc": endpoint_manager.get_endpoints() }
         }))
@@ -101,7 +99,7 @@ impl AgentEndpointController {
     pub async fn add_endpoint(&self, endpoint: AgentConfig) -> impl Responder {
         let mut endpoint_manager = self.endpoint_manager.lock().unwrap();
         endpoint_manager.add_endpoint(endpoint);
-        HttpResponse::Ok().json(json!({
+        HttpResponse::Ok().json(serde_json::json!({
             "success": true,
             "data": { "doc": endpoint_manager.get_endpoints() }
         }))
@@ -110,7 +108,7 @@ impl AgentEndpointController {
     pub async fn delete_endpoint(&self, id: String) -> impl Responder {
         let mut endpoint_manager = self.endpoint_manager.lock().unwrap();
         endpoint_manager.delete_endpoint(&id);
-        HttpResponse::Ok().json(json!({
+        HttpResponse::Ok().json(serde_json::json!({
             "success": true,
             "data": { "doc": endpoint_manager.get_endpoints() }
         }))

@@ -15,7 +15,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 ngrok = { version = "0.14.0-pre.13" }
-yaml-rust = "0.4.5"
+serde_yaml = "0.9.17" 
+fern = "0.6"
+chrono = "0.4"
 
 [dev-dependencies]
 actix-rt = "2.5.0"

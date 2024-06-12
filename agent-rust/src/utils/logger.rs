@@ -2,7 +2,6 @@
 
 use fern::Dispatch;
 use chrono::Local;
-use log::{info, warn, error, debug};
 use std::env;
 
 pub fn setup_logger() -> Result<(), fern::InitError> {

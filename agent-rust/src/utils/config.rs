@@ -1,10 +1,7 @@
-use actix_web::{web, App, HttpResponse, HttpServer};
+use actix_web::{web, HttpResponse};
 use actix_web::middleware::{Logger, Compress};
 use actix_web::web::JsonConfig;
-use actix_files::Files;
-use actix_service::Service;
 use actix_cors::Cors;
-use std::sync::Mutex;
 use std::collections::HashMap;
 
 use crate::routes::agent_endpoints;

@@ -1,4 +1,4 @@
-use actix_web::{web, App};
+use actix_web::{ App};
 
 use crate::utils;
 

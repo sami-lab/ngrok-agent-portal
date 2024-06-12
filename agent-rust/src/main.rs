@@ -13,7 +13,7 @@ async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-    let endpoint_manager = Arc::new(Mutex::new(endpoint_manager::EndpointManager::new()));
+    let endpoint_manager = Arc::new(Mutex::new(endpoints_manager::EndpointManager::new()));
     let agent_endpoint_controller = controllers::agent_endpoint_controller::AgentEndpointController::new(endpoint_manager.clone());
 
     // Initialize agent configuration
