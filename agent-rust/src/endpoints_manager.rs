@@ -16,8 +16,11 @@ impl EndpointManager {
         }
     }
 
-    pub async fn initialize_agent_config(&self, fetch_agent_config: impl Fn() -> task::JoinHandle<Result<Vec<AgentConfig>, Box<dyn std::error::Error>>>) {
-        let response = fetch_agent_config().await;
+    pub async fn initialize_agent_config(
+        &self,
+        fetch_agent_config: impl Fn() -> task::JoinHandle<Result<Vec<AgentConfig>, Box<dyn std::error::Error>>>
+    ) {
+        let response = fetch_agent_config().await.unwrap().await;
         if let Ok(configs) = response {
             let mut endpoints = self.endpoints.write().await;
             *endpoints = configs.into_iter().map(|mut config| {
@@ -29,7 +32,6 @@ impl EndpointManager {
             error!("Failed to fetch agent config.");
         }
     }
-
     pub async fn change_endpoint_status(&self, id: &str) -> Result<Vec<AgentConfig>, Box<dyn std::error::Error>> {
         let mut endpoints = self.endpoints.write().await;
         let mut success = false;
@@ -46,7 +48,7 @@ impl EndpointManager {
                 };
 
                 debug!("Starting endpoint {} with options: {:?}", endpoint.name, endpoint_yaml);
-                info!("Ingress established for endpoint {} at: {}", endpoint.name, listener.url());
+                // info!("Ingress established for endpoint {} at: {}", endpoint.name, listener.url());
                 endpoint.status = "online".to_string();
                 success = true;
                 // match ngrok::start_tunnel(endpoint_yaml).await {

@@ -1,7 +1,6 @@
-use crate::utils::logger;
-use crate::endpoint_managers::EndpointManager;
+use crate::endpoints_manager::EndpointManager;
 use actix_web::{ HttpResponse, Responder};
-use log::{info, error}; // Import the `error` macro from the `log` crate
+use log::{info,error}; // Import the `error` macro from the `log` crate
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
@@ -55,7 +54,7 @@ impl AgentEndpointController {
                 info!("Agent config initialized.");
             }
             Err(e) => {
-               error(&format!("Failed to fetch agent config: {}", e));
+               error!(&format!("Failed to fetch agent config: {}", e));
             }
         }
     }
