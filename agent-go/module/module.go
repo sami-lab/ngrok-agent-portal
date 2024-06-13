@@ -157,14 +157,14 @@ func isValidYAML(yamlContent string) bool {
 	return err == nil
 }
 
-func loadEndpointYaml(endpoint map[string]interface{}) (interface{}, error) {
+func loadEndpointYaml(endpoint map[string]interface{}) (map[string]interface{}, error) {
 	yamlContent, ok := endpoint["endpointYaml"].(string)
 	if !ok {
 		return nil, fmt.Errorf("endpointYaml not found or is not a string")
 	}
 
 	if isValidYAML(yamlContent) {
-		var endpointYaml interface{}
+		var endpointYaml map[string]interface{}
 		err := yaml.Unmarshal([]byte(yamlContent), &endpointYaml)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshalling endpointYaml: %v", err)
@@ -175,7 +175,7 @@ func loadEndpointYaml(endpoint map[string]interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("invalid YAML content")
 }
 
-func run(ctx context.Context, backend *url.URL, authtoken string, domain string, id string, endpointYaml interface{}) error {
+func run(ctx context.Context, backend *url.URL, authtoken string, id string, endpointYaml interface{}) error {
 	log.Println("Connecting to ngrok...")
 
 	// 10 seconds timeout to avoid indefinite retries
@@ -197,16 +197,21 @@ func run(ctx context.Context, backend *url.URL, authtoken string, domain string,
 
 	log.Println("Setting up forwarding...")
 
+	// Extract domain from endpointYaml
+	var domain string
+	if configMap, ok := endpointYaml.(map[string]interface{}); ok {
+		if d, exists := configMap["domain"].(string); exists {
+			domain = d
+		} else {
+			return fmt.Errorf("domain not found in endpointYaml")
+		}
+	} else {
+		return fmt.Errorf("invalid endpointYaml format")
+	}
+
 	// Convert endpointYaml to ngrok options
 	options := []ngrok_config.HTTPEndpointOption{
 		ngrok_config.WithDomain(domain),
-	}
-
-	// Process the endpointYaml to add additional options
-	if configMap, ok := endpointYaml.(map[string]interface{}); ok {
-		if domain, exists := configMap["domain"].(string); exists {
-			options = append(options, ngrok_config.WithDomain(domain))
-		}
 		// Add other configuration options based on endpointYaml
 	}
 
@@ -259,9 +264,23 @@ func UpdateEndpointStatus(id string, authToken string) (map[string]interface{}, 
 			if endpoint["status"] == "offline" {
 				endpoint["status"] = "online"
 
-				proto := "http"
-				addr := "localhost:8080"
-				domain := "sami.tunnels.ctindel-ngrok.com"
+				// Load endpoint YAML
+				endpointYaml, err := loadEndpointYaml(endpoint)
+				if err != nil {
+					return nil, err
+				}
+				fmt.Printf("Loaded YAML for endpoint %s: %v\n", endpoint["id"], endpointYaml)
+
+				// Extract proto and addr from endpointYaml
+				proto, protoExists := endpointYaml["proto"].(string)
+				if !protoExists {
+					return nil, fmt.Errorf("proto not found in endpointYaml")
+				}
+
+				addr, addrExists := endpointYaml["addr"].(string)
+				if !addrExists {
+					return nil, fmt.Errorf("addr not found in endpointYaml")
+				}
 
 				backend := fmt.Sprintf("%s://%s", proto, addr)
 				backendUrl, err := url.Parse(backend)
@@ -269,13 +288,7 @@ func UpdateEndpointStatus(id string, authToken string) (map[string]interface{}, 
 					log.Fatalf("Failed to parse backend URL: %v", err)
 				}
 
-				endpointYaml, err := loadEndpointYaml(endpoint)
-				if err != nil {
-					return nil, err
-				}
-				fmt.Printf("Loaded YAML for endpoint %s: %v\n", endpoint["id"], endpointYaml)
-
-				if err := run(context.Background(), backendUrl, authToken, domain, id, endpointYaml); err != nil {
+				if err := run(context.Background(), backendUrl, authToken, id, endpointYaml); err != nil {
 					if strings.Contains(err.Error(), "invalid ngrok authtoken") {
 						return nil, fmt.Errorf("invalid ngrok authtoken: %w", err)
 					}
