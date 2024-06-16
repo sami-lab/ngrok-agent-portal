@@ -277,9 +277,21 @@ func UpdateEndpointStatus(id string, authToken string) (map[string]interface{}, 
 					return nil, fmt.Errorf("proto not found in endpointYaml")
 				}
 
-				addr, addrExists := endpointYaml["addr"].(string)
+				var addr string
+				addrValue, addrExists := endpointYaml["addr"]
 				if !addrExists {
 					return nil, fmt.Errorf("addr not found in endpointYaml")
+				}
+
+				switch v := addrValue.(type) {
+				case string:
+					addr = v
+				case int:
+					addr = fmt.Sprintf("localhost:%d", v)
+				case float64:
+					addr = fmt.Sprintf("localhost:%d", int(v))
+				default:
+					return nil, fmt.Errorf("addr has an unsupported type in endpointYaml")
 				}
 
 				backend := fmt.Sprintf("%s://%s", proto, addr)
