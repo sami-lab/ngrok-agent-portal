@@ -175,7 +175,7 @@ func loadEndpointYaml(endpoint map[string]interface{}) (map[string]interface{}, 
 	return nil, fmt.Errorf("invalid YAML content")
 }
 
-func run(ctx context.Context, backend *url.URL, authtoken string, id string, endpointYaml interface{}) error {
+func run(ctx context.Context, backend *url.URL, authtoken string, id string, endpointYaml map[string]interface{}) error {
 	log.Println("Connecting to ngrok...")
 
 	// 10 seconds timeout to avoid indefinite retries
@@ -195,25 +195,21 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 	}
 	log.Println("Successfully connected to ngrok.")
 
-	log.Println("Setting up forwarding...")
-
 	// Extract domain from endpointYaml
-	var domain string
-	if configMap, ok := endpointYaml.(map[string]interface{}); ok {
-		if d, exists := configMap["domain"].(string); exists {
-			domain = d
-		} else {
-			return fmt.Errorf("domain not found in endpointYaml")
-		}
-	} else {
-		return fmt.Errorf("invalid endpointYaml format")
+	domain, domainExists := endpointYaml["domain"].(string)
+	if !domainExists {
+		return fmt.Errorf("domain not found in endpointYaml")
 	}
+
+	log.Println("Setting up forwarding...")
 
 	// Convert endpointYaml to ngrok options
 	options := []ngrok_config.HTTPEndpointOption{
 		ngrok_config.WithDomain(domain),
-		// Add other configuration options based on endpointYaml
 	}
+
+	// Add other configuration options based on endpointYaml
+	// (Add additional configuration options here if needed)
 
 	fwd, err := sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
 	if err != nil {
