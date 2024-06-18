@@ -1,4 +1,5 @@
 use crate::controllers::agent_endpoint_controller::AgentConfig;
+use actix_web::dev::Url;
 use log::{debug, error, info};
 use serde_yaml;
 use std::sync::{Arc};
@@ -16,15 +17,13 @@ impl EndpointManager {
         }
     }
 
-    pub async fn initialize_agent_config(
-        &self,
-        fetch_agent_config: impl Fn() -> task::JoinHandle<Result<Vec<AgentConfig>, Box<dyn std::error::Error>>>
-    ) {
-        let response = fetch_agent_config().await.unwrap().await;
+    pub async fn initialize_agent_config(&self, fetch_agent_config: impl Fn() -> task::JoinHandle<Result<Vec<AgentConfig>, Box<dyn std::error::Error>>>) {
+        let response = fetch_agent_config().await;
         if let Ok(configs) = response {
             let mut endpoints = self.endpoints.write().await;
             *endpoints = configs.into_iter().map(|mut config| {
                 config.status = "offline".to_string();
+                config.listener = None;
                 config
             }).collect();
             info!("Agent config initialized.");
@@ -51,16 +50,29 @@ impl EndpointManager {
                 // info!("Ingress established for endpoint {} at: {}", endpoint.name, listener.url());
                 endpoint.status = "online".to_string();
                 success = true;
-                // match ngrok::start_tunnel(endpoint_yaml).await {
-                //     Ok(listener) => {
-                //         info!("Ingress established for endpoint {} at: {}", endpoint.name, listener.url());
-                //         endpoint.status = "online".to_string();
-                //         success = true;
-                //     }
-                //     Err(e) => {
-                //         error!("Failed to start listener for endpoint {}: {}", id, e);
-                //     }
-                // }
+
+                let sess = ngrok::Session::builder()
+                .authtoken_from_env()
+                .connect()
+                .await?;     
+
+                match sess.http_endpoint().listen_and_forward(Url::parse("https://localhost:8001")?).await {
+                    Ok(listener) => {
+                        info!("Ingress established for endpoint {} at: {}", endpoint.name, listener.url());
+                        endpoint.status = "online".to_string();
+                        endpoint.listener = listener;
+                        success = true;
+                    }
+                    Err(e) => {
+                        error!("Failed to start listener for endpoint {}: {}", id, e);
+
+                    }
+                }
+               
+
+                
+              
+
             } else {
                 debug!("Stopping endpoint {}", endpoint.name);
                 match endpoint.listener.close().await {
@@ -84,7 +96,9 @@ impl EndpointManager {
         endpoints.clone()
     }
 
-    pub async fn add_endpoint(&self, endpoint: AgentConfig) {
+    pub async fn add_endpoint(&self,mut endpoint: AgentConfig) {
+        endpoint.listener = None;
+        endpoint.status = "offline".to_string();
         let mut endpoints = self.endpoints.write().await;
         endpoints.push(endpoint);
     }

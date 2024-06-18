@@ -1,9 +1,8 @@
-use actix_web::{App, web, HttpServer};
+use actix_web::{ App};
 
-mod routes;
-mod utils;
+use crate::utils::config::load_config;
 
-pub fn create_app() -> App<()> {
+pub fn create_app() -> App<impl actix_web::dev::ServiceFactory> {
     App::new()
-        .configure(routes::configure)
+        .configure(load_config)
 }
