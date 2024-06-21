@@ -1,6 +1,8 @@
 import logging
 import yaml
 import ngrok
+import asyncio
+
 from utils.appError import AppError
 # Import logger from utils.logger module
 from utils.logger import logger
@@ -76,6 +78,21 @@ def addEndpoint(endpoint):
     })
     return endpoints
 
+async def update(e,id,newEndpoint):
+        global endpoints, listeners
+        if e["id"] == id:
+            if e["status"] == "online" and e["listener_id"] is not None:
+                listeners[e["listener_id"]].close()  # Close the listener
+                del listeners[e["listener_id"]]  # Remove listener from the dictionary
+            return {**e, **newEndpoint, "status": "offline", "listener_id": None}
+        return e
+
+async def updateEndpoint(id,endpoint):
+   global endpoints, listeners
+   # Update endpoints list
+   endpoints = await asyncio.gather(*[update(e,id,endpoint) for e in endpoints])
+   return endpoints
+   
 def deleteEndpoint(id):
     global endpoints, listeners
     endpoints = [e for e in endpoints if e["id"] != id]

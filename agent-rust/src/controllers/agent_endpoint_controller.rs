@@ -13,7 +13,7 @@ pub struct AgentConfig {
     pub endpoint_yaml: String,
     pub status: String,
     #[serde(skip)] // This will skip serializing the listener field
-    pub listener: Option<Tunnel>, // Change Tunnel to the actual type if different
+    pub listener: Option<Tunnel<ngrok::Connection, ngrok::TunnelItem>>,
 }
 
 pub struct AgentEndpointController {
