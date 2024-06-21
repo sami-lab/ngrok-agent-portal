@@ -222,14 +222,16 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 	listeners[id] = fwd // Store the listener in the map
 	mu.Unlock()
 
-	// Optionally: Start a goroutine to wait for the forwarder to complete
-	go func() {
-		err := fwd.Wait()
-		if err != nil {
-			log.Printf("Forwarder error: %v", err)
-			// Optionally: Handle the error, retry, etc.
-		}
-	}()
+	// Wait for the forwarder to complete
+	err = fwd.Wait()
+	if err != nil {
+		log.Printf("Forwarder error: %v", err)
+		// Remove the listener from the map on error
+		// mu.Lock()
+		// delete(listeners, id)
+		// mu.Unlock()
+		return fmt.Errorf("forwarder error: %w", err)
+	}
 
 	return nil
 }
@@ -293,7 +295,7 @@ func UpdateEndpointStatus(id string, authToken string) (map[string]interface{}, 
 				backend := fmt.Sprintf("%s://%s", proto, addr)
 				backendUrl, err := url.Parse(backend)
 				if err != nil {
-					log.Fatalf("Failed to parse backend URL: %v", err)
+					return nil, fmt.Errorf("failed to parse backend URL: %v", err)
 				}
 
 				if err := run(context.Background(), backendUrl, authToken, id, endpointYaml); err != nil {
@@ -306,9 +308,15 @@ func UpdateEndpointStatus(id string, authToken string) (map[string]interface{}, 
 				return endpoint, nil
 			} else {
 				endpoint["status"] = "offline"
-				if err := stopNgrokListener(id); err != nil {
-					log.Fatalf("Failed to stop ngrok listener: %v", err)
+				err := stopNgrokListener(id)
+				if err != nil {
+					return nil, fmt.Errorf("failed to stop ngrok listener for id %s: %v", id, err)
 				}
+
+				// mu.Lock()
+				// delete(listeners, id) // Ensure the listener is removed from the map
+				// mu.Unlock()
+
 				return endpoint, nil
 			}
 		}
