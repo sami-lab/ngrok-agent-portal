@@ -195,23 +195,65 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 	}
 	log.Println("Successfully connected to ngrok.")
 
-	// Extract domain from endpointYaml
-	domain, domainExists := endpointYaml["domain"].(string)
-	if !domainExists {
-		return fmt.Errorf("domain not found in endpointYaml")
+	// Extract proto from endpointYaml
+	proto, protoExists := endpointYaml["proto"].(string)
+	if !protoExists {
+		return fmt.Errorf("proto not found in endpointYaml")
 	}
 
-	log.Println("Setting up forwarding...")
+	var fwd ngrok.Forwarder
+	switch proto {
+	case "http":
+		log.Println("Setting up HTTP forwarding...")
+		options := []ngrok_config.HTTPEndpointOption{}
 
-	// Convert endpointYaml to ngrok options
-	options := []ngrok_config.HTTPEndpointOption{
-		ngrok_config.WithDomain(domain),
+		// Conditionally include the domain option if present
+		if domain, domainExists := endpointYaml["domain"].(string); domainExists {
+			options = append(options, ngrok_config.WithDomain(domain))
+		}
+
+		// Add other configuration options based on endpointYaml if needed
+		fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
+	case "https":
+		log.Println("Setting up HTTP forwarding...")
+		options := []ngrok_config.HTTPEndpointOption{}
+
+		// Conditionally include the domain option if present
+		if domain, domainExists := endpointYaml["domain"].(string); domainExists {
+			options = append(options, ngrok_config.WithDomain(domain))
+		}
+
+		// Add other configuration options based on endpointYaml if needed
+		fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
+	case "tcp":
+		log.Println("Setting up TCP forwarding...")
+
+		// Extract remote_addr if specified
+		var remoteAddr string
+		if remoteAddrValue, remoteAddrExists := endpointYaml["remote_addr"]; remoteAddrExists {
+			switch v := remoteAddrValue.(type) {
+			case string:
+				remoteAddr = v
+			case int:
+				remoteAddr = fmt.Sprintf("0.tcp.ngrok.io:%d", v)
+			case float64:
+				remoteAddr = fmt.Sprintf("0.tcp.ngrok.io:%d", int(v))
+			default:
+				return fmt.Errorf("remote_addr has an unsupported type in endpointYaml")
+			}
+		}
+
+		options := []ngrok_config.TCPEndpointOption{}
+		if remoteAddr != "" {
+			options = append(options, ngrok_config.WithRemoteAddr(remoteAddr))
+		}
+
+		// Add other configuration options based on endpointYaml if needed
+		fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.TCPEndpoint(options...))
+	default:
+		return fmt.Errorf("unsupported protocol: %s", proto)
 	}
 
-	// Add other configuration options based on endpointYaml
-	// (Add additional configuration options here if needed)
-
-	fwd, err := sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
 	if err != nil {
 		return fmt.Errorf("failed to listen and forward: %w", err)
 	}
