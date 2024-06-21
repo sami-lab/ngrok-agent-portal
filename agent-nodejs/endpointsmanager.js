@@ -125,8 +125,19 @@ async function updateEndpoint(id, endpoint) {
   return endpoints;
 }
 
-function deleteEndpoint(id) {
-  endpoints = endpoints.filter((e) => e.id !== id);
+async function deleteEndpoint(id) {
+  endpoints = await Promise.all(
+    endpoints.filter(async (e) => {
+      if (e.id === id) {
+        //closing listner of ngrok (endpointYaml might change configuration)
+        if (e.status === "online" && e.listener !== null) {
+          await e.listener.close();
+        }
+        return false;
+      }
+      return true;
+    })
+  );
   return endpoints;
 }
 module.exports = {

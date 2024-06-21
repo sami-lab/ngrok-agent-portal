@@ -121,7 +121,7 @@ exports.updateEndpoint = catchAsync(async (req, res, next) => {
 exports.deleteEndpoint = catchAsync(async (req, res, next) => {
   const id = req.params.endpointId;
 
-  let endpointResponse = endpointManager.deleteEndpoint(id);
+  let endpointResponse = await endpointManager.deleteEndpoint(id);
 
   res.status(200).json({
     success: true,
