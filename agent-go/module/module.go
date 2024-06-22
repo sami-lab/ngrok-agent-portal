@@ -56,7 +56,8 @@ func FetchAgentConfig() {
 	if err != nil {
 		log.Fatalf("Error creating HTTP request: %v", err)
 	}
-	req.Header.Set("Token", agentToken)
+	req.Header.Set("AGENT_ID", agentID)
+	req.Header.Set("AGENT_TOKEN", agentToken)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

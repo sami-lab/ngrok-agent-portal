@@ -13,8 +13,8 @@ exports.getEndpointStatus = catchAsync(async (req, res, next) => {
       `${doc?.agentAddress}/getEndPointStatus/${doc._id}`,
       {
         headers: {
-          id: doc._id,
-          token: doc.agentToken,
+          AGENT_ID: doc._id,
+          AGENT_TOKEN: doc.agentToken,
         },
       }
     );
@@ -35,8 +35,10 @@ exports.getAgentEndpoints = catchAsync(async (req, res, next) => {
   if (!doc) {
     return next(new AppError("Agent not found", 404));
   }
-  const agentToken = req.headers.token;
-  if (agentToken !== doc.agentToken) {
+  const agentToken = req.headers.agent_token;
+  const agentId = req.headers.agent_id;
+
+  if (agentToken !== doc.agentToken || agentId !== doc._id) {
     return next(new AppError("Agent not found", 404));
   }
   res.status(200).json({
@@ -66,8 +68,8 @@ exports.updateEndPointStatus = catchAsync(async (req, res, next) => {
         authToken: doc.authToken,
       },
       headers: {
-        id: doc._id,
-        token: doc.agentToken,
+        AGENT_ID: doc._id,
+        AGENT_TOKEN: doc.agentToken,
       },
     });
     if (response.data.success) {
@@ -101,11 +103,6 @@ exports.updateEndpoint = catchAsync(async (req, res, next) => {
     //proto, endPointaddr, crt, key
   } = req.body;
 
-  // if (proto === "tls") {
-  //   if (crt === undefined || key === undefined) {
-  //     return next(new AppError("crt or key cannot be empty for tls", 422));
-  //   }
-  // }
   const doc = await Agent.findOneAndUpdate(
     { _id: req.params.agentId, "endpoints._id": req.params.endpointId },
     {
@@ -132,10 +129,29 @@ exports.updateEndpoint = catchAsync(async (req, res, next) => {
     (x) => x._id === req.params.endpointId
   );
 
+  try {
+    const response = await axios.patch(
+      `${doc.agentAddress}/updateEndpoint/${req.params.endpointId}`,
+      newEndPointDoc,
+      {
+        headers: {
+          AGENT_ID: doc._id,
+          AGENT_TOKEN: doc.agentToken,
+        },
+      }
+    );
+
+    if (response.data.success) {
+    } else {
+    }
+  } catch (err) {}
   res.status(200).json({
     success: true,
     data: {
-      doc: newEndPointDoc,
+      doc: {
+        ...newEndPointDoc,
+        status: "offline",
+      },
     },
   });
 });
@@ -185,8 +201,8 @@ exports.createEndpoint = catchAsync(async (req, res, next) => {
       newEndPointDoc,
       {
         headers: {
-          id: doc._id,
-          token: doc.agentToken,
+          AGENT_ID: doc._id,
+          AGENT_TOKEN: doc.agentToken,
         },
       }
     );
@@ -226,8 +242,8 @@ exports.deleteEndpoint = catchAsync(async (req, res, next) => {
       method: "delete",
       url: `${doc.agentAddress}/deleteEndpoint/${req.params.endpointId}`,
       headers: {
-        id: doc._id,
-        token: doc.agentToken,
+        AGENT_ID: doc._id,
+        AGENT_TOKEN: doc.agentToken,
       },
     });
 
