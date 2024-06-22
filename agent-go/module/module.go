@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"golang.ngrok.com/ngrok"
+	"golang.ngrok.com/ngrok/config"
 	ngrok_config "golang.ngrok.com/ngrok/config"
 	ngrok_log "golang.ngrok.com/ngrok/log"
 	"gopkg.in/yaml.v2"
@@ -224,7 +225,26 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 		}
 
 		// Add other configuration options based on endpointYaml if needed
-		fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
+		// fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
+		fwd, err = sess.ListenAndForward(ctx,
+			backend,
+			config.HTTPEndpoint(),
+		)
+		if err != nil {
+			return err
+		}
+
+		l.Log(ctx, ngrok_log.LogLevelInfo, "ingress established", map[string]any{
+			"url": fwd.URL(),
+		})
+
+		err = fwd.Wait()
+		if err == nil {
+			return nil
+		}
+		l.Log(ctx, ngrok_log.LogLevelWarn, "accept error. now setting up a new forwarder.",
+			map[string]any{"err": err})
+
 	case "tcp":
 		log.Println("Setting up TCP forwarding...")
 
