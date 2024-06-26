@@ -204,7 +204,7 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 
 	var fwd ngrok.Forwarder
 	switch proto {
-	case "http":
+	case "http", "https":
 		log.Println("Setting up HTTP forwarding...")
 		options := []ngrok_config.HTTPEndpointOption{}
 
@@ -215,17 +215,7 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 
 		// Add other configuration options based on endpointYaml if needed
 		fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
-	case "https":
-		log.Println("Setting up HTTP forwarding...")
-		options := []ngrok_config.HTTPEndpointOption{}
 
-		// Conditionally include the domain option if present
-		if domain, domainExists := endpointYaml["domain"].(string); domainExists {
-			options = append(options, ngrok_config.WithDomain(domain))
-		}
-
-		// Add other configuration options based on endpointYaml if needed
-		fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
 	case "tcp":
 		log.Println("Setting up TCP forwarding...")
 
