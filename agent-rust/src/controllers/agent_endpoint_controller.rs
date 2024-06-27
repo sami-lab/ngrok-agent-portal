@@ -1,10 +1,12 @@
 use crate::endpoints_manager::EndpointManager;
 use actix_web::{ HttpResponse, Responder};
+use serde_json::json;
 use log::{info,error}; // Import the `error` macro from the `log` crate
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
-use ngrok::Tunnel;
+use ngrok::tunnel::HttpTunnel;
+use ngrok::forwarder::Forwarder;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AgentConfig {
@@ -13,7 +15,7 @@ pub struct AgentConfig {
     pub endpoint_yaml: String,
     pub status: String,
     #[serde(skip)] // This will skip serializing the listener field
-    pub listener: Option<Tunnel<ngrok::Connection, ngrok::TunnelItem>>,
+    pub listener: Option<Forwarder<HttpTunnel>>, // Update listener type here
 }
 
 pub struct AgentEndpointController {
@@ -36,7 +38,8 @@ impl AgentEndpointController {
 
         let url = format!("{}/api/v1/endpoint/{}", backend_url, agent_id);
         let response = self.client.get(&url)
-            .header("token", agent_token)
+            .header("AGENT_TOKEN", agent_token)
+            .header("AGENT_ID", agent_id)
             .send()
             .await?;
 
@@ -52,12 +55,13 @@ impl AgentEndpointController {
     pub async fn initialize_agent_config(&self) {
         match self.fetch_agent_config().await {
             Ok(configs) => {
-                let mut endpoints_manager = self.endpoints_manager.lock().unwrap();
+                let endpoints_manager = self.endpoints_manager.lock().unwrap();
                 endpoints_manager.initialize_agent_config(configs);
+                
                 info!("Agent config initialized.");
             }
             Err(e) => {
-                error!("Failed to fetch agent config.");
+                error!("Failed to fetch agent config. {}",e);
             }
         }
     }
@@ -92,27 +96,32 @@ impl AgentEndpointController {
         }
 
         let endpoints_manager = self.endpoints_manager.lock().unwrap();
+        let endpoints=  endpoints_manager.get_endpoints().await;
         HttpResponse::Ok().json(serde_json::json!({
             "success": true,
-            "data": { "doc": endpoints_manager.get_endpoints() }
+            "data": { "doc": endpoints }
         }))
     }
 
     pub async fn add_endpoint(&self, endpoint: AgentConfig) -> impl Responder {
         let mut endpoints_manager = self.endpoints_manager.lock().unwrap();
         endpoints_manager.add_endpoint(endpoint);
-        HttpResponse::Ok().json(serde_json::json!({
+        let endpoints=  endpoints_manager.get_endpoints().await;
+
+        HttpResponse::Ok().json(json!({
             "success": true,
-            "data": { "doc": endpoints_manager.get_endpoints() }
+            "data": { "doc": endpoints}
         }))
     }
 
     pub async fn delete_endpoint(&self, id: String) -> impl Responder {
         let mut endpoints_manager = self.endpoints_manager.lock().unwrap();
         endpoints_manager.delete_endpoint(&id);
+        let endpoints=  endpoints_manager.get_endpoints().await;
+
         HttpResponse::Ok().json(serde_json::json!({
             "success": true,
-            "data": { "doc": endpoints_manager.get_endpoints() }
+            "data": { "doc":endpoints }
         }))
     }
 }

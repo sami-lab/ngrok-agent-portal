@@ -1,10 +1,11 @@
-use crate::controllers::agent_endpoint_controller::AgentConfig;
-use actix_web::dev::Url;
+use crate::controllers::agent_endpoint_controller::{AgentEndpointController,AgentConfig};
+//use actix_web::dev::Url;
 use log::{debug, error, info};
 use serde_yaml;
 use std::sync::{Arc};
 use tokio::sync::RwLock;
-use tokio::task;
+use ngrok::prelude::*;
+use url::Url;
 
 pub struct EndpointManager {
     endpoints: Arc<RwLock<Vec<AgentConfig>>>,
@@ -17,8 +18,11 @@ impl EndpointManager {
         }
     }
 
-    pub async fn initialize_agent_config(&self, fetch_agent_config: impl Fn() -> task::JoinHandle<Result<Vec<AgentConfig>, Box<dyn std::error::Error>>>) {
-        let response = fetch_agent_config().await;
+    //pub async fn initialize_agent_config(&self, fetch_agent_config: impl Fn() -> task::JoinHandle<Result<Vec<AgentConfig>, Box<dyn std::error::Error>>>) {
+    pub async fn initialize_agent_config(&self, configs: Vec<AgentConfig>) {
+        let agent_endpoint_controller = web::Data::new(AgentEndpointController::new(self));
+
+        let response = agent_endpoint_controller.fetch_agent_config().await;
         if let Ok(configs) = response {
             let mut endpoints = self.endpoints.write().await;
             *endpoints = configs.into_iter().map(|mut config| {
@@ -33,7 +37,8 @@ impl EndpointManager {
     }
     pub async fn change_endpoint_status(&self, id: &str) -> Result<Vec<AgentConfig>, Box<dyn std::error::Error>> {
         let mut endpoints = self.endpoints.write().await;
-        let mut success = false;
+        let success = false;
+        println!("Success: {}", success);
 
         if let Some(endpoint) = endpoints.iter_mut().find(|e| e.id == id) {
             if endpoint.status == "offline" {
@@ -60,7 +65,7 @@ impl EndpointManager {
                     Ok(listener) => {
                         info!("Ingress established for endpoint {} at: {}", endpoint.name, listener.url());
                         endpoint.status = "online".to_string();
-                        endpoint.listener = listener;
+                        endpoint.listener = Some(listener);
                         success = true;
                     }
                     Err(e) => {

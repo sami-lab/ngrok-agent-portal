@@ -40,8 +40,8 @@ async def changeEndpointsStatus(id,authToken):
             try:
                 endpointYaml = yaml.safe_load(endpoint.get("endpointYaml"))
                 logger.debug(f"Starting endpoint {endpoint.get('name')} with options: {endpointYaml}")
-                listener:ngrok.Listener = await ngrok.forward(authtoken=authToken, proto="http", addr="localhost:8001", domain="sami.tunnels.ctindel-ngrok.com")
-                # listener = ngrok.forward(**{**{"authtoken_from_env": True}, **endpointYaml})
+                #listener:ngrok.Listener = await ngrok.forward(authtoken=authToken, proto="http", addr="localhost:8001", domain="sami.tunnels.ctindel-ngrok.com")
+                listener:ngrok.Listener = await ngrok.forward(authtoken=authToken, **endpointYaml)
                 logger.info(f"Ingress established for endpoint {endpoint.get('name')} at: {listener.url()}")
                 listeners[id] = listener  # Store listener in the dictionary
                 endpoint["listener_id"] = id
