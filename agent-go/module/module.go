@@ -214,7 +214,14 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 		}
 
 		// Add other configuration options based on endpointYaml if needed
-		fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
+		// fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
+
+		fwd, err = ngrok.ListenAndForward(context.Background(),
+			backend,
+			ngrok_config.HTTPEndpoint(options...),
+			// config.HTTPEndpoint(config.WithAppProtocol("http2")),
+			ngrok.WithAuthtoken(authtoken),
+		)
 
 	case "tcp":
 		log.Println("Setting up TCP forwarding...")
@@ -256,15 +263,15 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 	mu.Unlock()
 
 	// Wait for the forwarder to complete
-	err = fwd.Wait()
-	if err != nil {
-		log.Printf("Forwarder error: %v", err)
-		// Remove the listener from the map on error
-		// mu.Lock()
-		// delete(listeners, id)
-		// mu.Unlock()
-		return fmt.Errorf("forwarder error: %w", err)
-	}
+	// err = fwd.Wait()
+	// if err != nil {
+	// 	log.Printf("Forwarder error: %v", err)
+	// 	// Remove the listener from the map on error
+	// 	// mu.Lock()
+	// 	// delete(listeners, id)
+	// 	// mu.Unlock()
+	// 	return fmt.Errorf("forwarder error: %w", err)
+	// }
 
 	return nil
 }
