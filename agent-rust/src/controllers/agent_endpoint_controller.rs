@@ -15,7 +15,7 @@ pub struct AgentConfig {
     pub endpoint_yaml: String,
     pub status: String,
     #[serde(skip)] // This will skip serializing the listener field
-    pub listener: Option<Forwarder<HttpTunnel>>, // Update listener type here
+    pub listener: Forwarder<HttpTunnel>, // Update listener type here
 }
 
 pub struct AgentEndpointController {

@@ -1,3 +1,4 @@
+use actix_web::{web};
 use crate::controllers::agent_endpoint_controller::{AgentEndpointController,AgentConfig};
 //use actix_web::dev::Url;
 use log::{debug, error, info};
@@ -20,7 +21,8 @@ impl EndpointManager {
 
     //pub async fn initialize_agent_config(&self, fetch_agent_config: impl Fn() -> task::JoinHandle<Result<Vec<AgentConfig>, Box<dyn std::error::Error>>>) {
     pub async fn initialize_agent_config(&self, configs: Vec<AgentConfig>) {
-        let agent_endpoint_controller = web::Data::new(AgentEndpointController::new(self));
+        let endpoints_manager = Arc::new(Mutex::new(self.clone()));
+        let agent_endpoint_controller = web::Data::new(AgentEndpointController::new(endpoints_manager));
 
         let response = agent_endpoint_controller.fetch_agent_config().await;
         if let Ok(configs) = response {
@@ -80,14 +82,16 @@ impl EndpointManager {
 
             } else {
                 debug!("Stopping endpoint {}", endpoint.name);
-                match endpoint.listener.close().await {
-                    Ok(_) => {
-                        info!("Ingress closed for endpoint {}", endpoint.name);
-                        endpoint.status = "offline".to_string();
-                        success = true;
-                    }
-                    Err(e) => {
-                        error!("Failed to close listener for endpoint {}: {}", id, e);
+                if let Some(listener) = endpoint.listener.take() {
+                    match listener.close().await {
+                        Ok(_) => {
+                            info!("Ingress closed for endpoint {}", endpoint.name);
+                            endpoint.status = "offline".to_string();
+                            success = true;
+                        }
+                        Err(e) => {
+                            error!("Failed to close listener for endpoint {}: {}", id, e);
+                        }
                     }
                 }
             }
