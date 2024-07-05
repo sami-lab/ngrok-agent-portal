@@ -979,10 +979,7 @@ export default function FullFeaturedCrudGrid() {
       />
       {/* banner */}
       <Grid item sx={{ width: { md: "75%", xs: "90%" }, mt: "50px" }}>
-        <img
-          src='/banner.jpg'
-          style={{ width: "100%", height: "auto", maxHeight: "400px" }}
-        />
+        <img src='/banner.jpg' style={{ width: "100%", height: "100%" }} />
       </Grid>
       <Grid item sx={{ width: { md: "80%", xs: "100%" }, mt: "50px" }}>
         <DataGrid
