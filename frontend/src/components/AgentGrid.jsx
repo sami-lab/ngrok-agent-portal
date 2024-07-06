@@ -926,6 +926,7 @@ export default function FullFeaturedCrudGrid() {
       container
       justifyContent='center'
       alignItems='center'
+      direction='column'
       sx={{ minHeight: "100vh" }}
     >
       <Snackbar
@@ -976,7 +977,11 @@ export default function FullFeaturedCrudGrid() {
           }
         }}
       />
-      <Grid item sx={{ width: { md: "80%", xs: "100%" } }}>
+      {/* banner */}
+      <Grid item sx={{ width: { md: "75%", xs: "90%" }, mt: "50px" }}>
+        <img src='/banner.jpg' style={{ width: "100%", height: "100%" }} />
+      </Grid>
+      <Grid item sx={{ width: { md: "80%", xs: "100%" }, mt: "50px" }}>
         <DataGrid
           disableRowSelectionOnClick
           apiRef={apiRef}
