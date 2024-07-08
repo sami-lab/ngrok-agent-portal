@@ -176,7 +176,7 @@ func loadEndpointYaml(endpoint map[string]interface{}) (map[string]interface{}, 
 	return nil, fmt.Errorf("invalid YAML content")
 }
 
-func run(ctx context.Context, backend *url.URL, authtoken string, id string, endpointYaml map[string]interface{}) error {
+func run(ctx context.Context, backend *url.URL, authtoken string, id string, endpointYaml map[string]interface{}, _domain string) error {
 	log.Println("Connecting to ngrok...")
 
 	// 10 seconds timeout to avoid indefinite retries
@@ -188,6 +188,8 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 		ngrok.WithAuthtoken(authtoken),
 		ngrok.WithLogger(&logger{lvl: ngrok_log.LogLevelDebug}),
 	)
+	log.Println(sess)
+
 	if err != nil {
 		if strings.Contains(err.Error(), "authentication failed") {
 			return fmt.Errorf("invalid ngrok authtoken: %w", err)
@@ -207,11 +209,7 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 	case "http", "https":
 		log.Println("Setting up HTTP forwarding...")
 		options := []ngrok_config.HTTPEndpointOption{}
-
-		// Conditionally include the domain option if present
-		if domain, domainExists := endpointYaml["domain"].(string); domainExists {
-			options = append(options, ngrok_config.WithDomain(domain))
-		}
+		options = append(options, ngrok_config.WithDomain(_domain))
 
 		// Add other configuration options based on endpointYaml if needed
 		// fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.HTTPEndpoint(options...))
@@ -247,7 +245,28 @@ func run(ctx context.Context, backend *url.URL, authtoken string, id string, end
 		}
 
 		// Add other configuration options based on endpointYaml if needed
-		fwd, err = sess.ListenAndForward(ctx, backend, ngrok_config.TCPEndpoint(options...))
+		fwd, err = ngrok.ListenAndForward(
+			context.Background(),
+			backend,
+			ngrok_config.TCPEndpoint(options...),
+			ngrok.WithAuthtoken(authtoken),
+		)
+
+	case "tls":
+		log.Println("Setting up TLS forwarding...")
+		options := []ngrok_config.TLSEndpointOption{}
+
+		// Conditionally include the domain option if present
+		options = append(options, ngrok_config.WithDomain(_domain))
+
+		// Add other configuration options based on endpointYaml if needed
+		ngrok.ListenAndForward(
+			context.Background(),
+			backend,
+			ngrok_config.TLSEndpoint(options...),
+			ngrok.WithAuthtoken(authtoken),
+		)
+
 	default:
 		return fmt.Errorf("unsupported protocol: %s", proto)
 	}
@@ -321,6 +340,11 @@ func UpdateEndpointStatus(id string, authToken string) (map[string]interface{}, 
 					return nil, fmt.Errorf("addr not found in endpointYaml")
 				}
 
+				domain, domainExists := endpointYaml["domain"].(string)
+				if !domainExists {
+					return nil, fmt.Errorf("domain not found in endpointYaml")
+				}
+
 				switch v := addrValue.(type) {
 				case string:
 					addr = v
@@ -338,7 +362,7 @@ func UpdateEndpointStatus(id string, authToken string) (map[string]interface{}, 
 					return nil, fmt.Errorf("failed to parse backend URL: %v", err)
 				}
 
-				if err := run(context.Background(), backendUrl, authToken, id, endpointYaml); err != nil {
+				if err := run(context.Background(), backendUrl, authToken, id, endpointYaml, domain); err != nil {
 					if strings.Contains(err.Error(), "invalid ngrok authtoken") {
 						return nil, fmt.Errorf("invalid ngrok authtoken: %w", err)
 					}
